@@ -1,0 +1,193 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ language.title }} - Ngôn Ngữ Ký Hiệu{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+        animation: fadeInDown 0.6s ease-out;
+    }
+    
+    .back-button {
+        color: white;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .back-button:hover {
+        gap: 1rem;
+    }
+    
+    .detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 3rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid #f0f0f0;
+    }
+    
+    .detail-container h1 {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1.5rem;
+        font-size: 2rem;
+    }
+    
+    .symbol-display {
+        font-size: 5rem;
+        text-align: center;
+        color: #764ba2;
+        margin: 2.5rem 0;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        padding: 2rem;
+        border-radius: 12px;
+        border: 2px dashed rgba(102, 126, 234, 0.3);
+    }
+    
+    .detail-section {
+        margin-bottom: 2.5rem;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border-left: 5px solid #667eea;
+    }
+    
+    .detail-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .detail-section h3 {
+        color: #667eea;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    
+    .detail-section p {
+        color: #2c3e50;
+        line-height: 1.8;
+        font-size: 1.05rem;
+    }
+    
+    .category-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.7rem 1.5rem;
+        border-radius: 25px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .info-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .info-item label {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: block;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-item p {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-large {
+        flex: 1;
+        min-width: 150px;
+        padding: 1rem !important;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <a href="{% url 'home' %}" class="back-button"><i class="fas fa-arrow-left"></i> Quay Lại</a>
+</div>
+
+<div class="detail-container">
+    <h1><i class="fas fa-book"></i> {{ language.title }}</h1>
+    
+    <div class="symbol-display">{{ language.symbol }}</div>
+    
+    <div class="detail-section">
+        <h3><i class="fas fa-lightbulb"></i> Ý Nghĩa</h3>
+        <p>{{ language.meaning }}</p>
+    </div>
+    
+    {% if language.example %}
+    <div class="detail-section">
+        <h3><i class="fas fa-graduation-cap"></i> Ví Dụ</h3>
+        <p>{{ language.example }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="detail-section">
+        <h3><i class="fas fa-tag"></i> Danh Mục</h3>
+        <span class="category-badge">{{ language.category }}</span>
+    </div>
+    
+    <div class="detail-section">
+        <h3><i class="fas fa-info-circle"></i> Thông Tin Thêm</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Tạo Lúc</label>
+                <p>{{ language.created_at|date:"d/m/Y" }}</p>
+            </div>
+            <div class="info-item">
+                <label>Cập Nhật</label>
+                <p>{{ language.updated_at|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <a href="{% url 'home' %}" class="btn btn-primary btn-large"><i class="fas fa-home"></i> Về Trang Chủ</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-large"><i class="fas fa-tachometer-alt"></i> Về Dashboard</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-secondary btn-large"><i class="fas fa-sign-in-alt"></i> Đăng Nhập Để Lưu</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

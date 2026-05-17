@@ -1,0 +1,296 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ action }} Khoá học - Ngôn Ngữ Ký Hiệu{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    /* Sidebar */
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) {
+        .sidebar-modern { display: flex; }
+    }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover {
+        background-color: #f1f5f9;
+        color: var(--primary);
+    }
+    .nav-link-custom.active {
+        background-color: #eef2ff;
+        color: var(--primary);
+    }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    /* Main Content */
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .content-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .card-body-custom { padding: 32px; }
+    
+    .form-group-custom { margin-bottom: 1.5rem; }
+    .form-label-custom { font-weight: 600; color: #334155; margin-bottom: 0.5rem; font-size: 14px; }
+    .form-control-custom {
+        display: block;
+        width: 100%;
+        padding: .6rem 1rem;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5;
+        color: var(--text-main);
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .form-control-custom:focus {
+        border-color: var(--primary);
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link-custom">
+                    <i class="fas fa-home-alt"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_list' %}" class="nav-link-custom">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            </li>
+        </ul>
+
+        {% if user.is_staff %}
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'user_list' %}" class="nav-link-custom">
+                    <i class="fas fa-users-cog"></i> Quản lý Người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_management' %}" class="nav-link-custom active">
+                    <i class="fas fa-book"></i> Quản lý Khoá học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'model_management' %}" class="nav-link-custom">
+                    <i class="fas fa-robot"></i> Quản lý Model AI
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/" class="nav-link-custom">
+                    <i class="fas fa-user-shield"></i> Hệ thống Admin
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="content-header">
+            <div class="page-heading">
+                <h2>{{ action }} Khoá học</h2>
+                <p>Điền các thông tin chi tiết cho khoá học.</p>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-body-custom">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <form method="POST">
+                            {% csrf_token %}
+
+                            <div class="form-group-custom">
+                                <label for="title" class="form-label-custom">Tiêu đề Khoá học</label>
+                                <input type="text" class="form-control-custom" id="title" name="title" value="{{ course.title|default:'' }}" required>
+                            </div>
+
+                            <div class="form-group-custom">
+                                <label for="description" class="form-label-custom">Mô tả chi tiết</label>
+                                <textarea class="form-control-custom" id="description" name="description" rows="4" required>{{ course.description|default:'' }}</textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group-custom">
+                                        <label for="category" class="form-label-custom">Danh mục</label>
+                                        <input type="text" class="form-control-custom" id="category" name="category" value="{{ course.category|default:'' }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group-custom">
+                                        <label for="difficulty" class="form-label-custom">Độ khó</label>
+                                        <select class="form-control-custom" id="difficulty" name="difficulty">
+                                            <option value="Beginner" {% if course.difficulty == 'Beginner' %}selected{% endif %}>Beginner</option>
+                                            <option value="Intermediate" {% if course.difficulty == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                                            <option value="Advanced" {% if course.difficulty == 'Advanced' %}selected{% endif %}>Advanced</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group-custom">
+                                <label for="duration" class="form-label-custom">Thời lượng (giờ)</label>
+                                <input type="text" class="form-control-custom" id="duration" name="duration" value="{{ course.duration|default:'' }}" required>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4">Lưu Khoá học</button>
+                                <a href="{% url 'course_management' %}" class="btn btn-secondary">Hủy bỏ</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if action == 'Edit' %}
+        <div class="content-header mt-5">
+            <div class="page-heading">
+                <h2>Nội dung khóa học</h2>
+                <p>Quản lý các chương và bài tập cho khóa học này.</p>
+            </div>
+             <a href="{% url 'add_chapter' course.id %}" class="btn btn-primary">Thêm Chương</a>
+        </div>
+        <div class="glass-card">
+            <div class="card-body-custom">
+                 {% for chapter in course.chapters.all %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">{{ chapter.order }}. {{ chapter.title }}</h5>
+                        <div>
+                            <a href="{% url 'edit_chapter' chapter.id %}" class="btn btn-sm btn-outline-primary">Sửa Chương</a>
+                            <a href="{% url 'delete_chapter' chapter.id %}" class="btn btn-sm btn-outline-danger">Xóa Chương</a>
+                            <a href="{% url 'add_exercise' chapter.id %}" class="btn btn-sm btn-primary">Thêm Bài tập</a>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush mb-4">
+                        {% for exercise in chapter.exercises.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ exercise.order }}. {{ exercise.question }}</span>
+                             <div>
+                                <a href="{% url 'edit_exercise' exercise.id %}" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                                <a href="{% url 'delete_exercise' exercise.id %}" class="btn btn-sm btn-outline-danger">Xóa</a>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item">Chưa có bài tập nào.</li>
+                        {% endfor %}
+                    </ul>
+                {% empty %}
+                    <p>Chưa có chương nào trong khóa học này.</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </main>
+</div>
+{% endblock %}

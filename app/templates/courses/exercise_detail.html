@@ -1,0 +1,366 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Bài tập: {{ exercise.question }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4f46e5;
+        --primary-light: #eef2ff;
+        --success-color: #10b981;
+        --success-light: #ecfdf5;
+        --danger-color: #ef4444;
+        --danger-light: #fef2f2;
+        --warning-color: #f59e0b;
+        --warning-light: #fffbeb;
+        --text-color: #111827;
+        --muted-text-color: #6b7280;
+        --border-color: #d1d5db;
+        --background-color: #f9fafb;
+    }
+
+    body {
+        background-color: var(--background-color);
+    }
+
+    .exercise-container {
+        max-width: 768px;
+        margin: auto;
+    }
+
+    .breadcrumb-item a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .question-card {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--border-color);
+    }
+
+    .question-card .question-text {
+        font-size: 1.25rem;
+        color: var(--muted-text-color);
+    }
+
+    .question-card .question-target {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0.5rem 0;
+    }
+
+    .video-wrapper {
+        background-color: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-top: 2rem;
+    }
+
+    .video-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1.25rem;
+        background-color: #f3f4f6;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .video-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    #recording-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--muted-text-color);
+        font-size: 0.875rem;
+        transition: color 0.3s ease;
+    }
+
+    #recording-indicator {
+        width: 10px;
+        height: 10px;
+        background-color: var(--muted-text-color);
+        border-radius: 50%;
+        transition: background-color 0.3s ease;
+    }
+
+    #recording-status.recording {
+        color: var(--danger-color);
+    }
+
+    #recording-status.recording #recording-indicator {
+        background-color: var(--danger-color);
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .video-main video {
+        width: 100%;
+        display: block;
+    }
+
+    .controls {
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    #result-card {
+        display: none; /* Hidden by default */
+        text-align: center;
+        padding: 2rem;
+        border-radius: 0.75rem;
+        margin-top: 2rem;
+        border: 1px solid transparent;
+    }
+
+    #result-card.correct {
+        background-color: var(--success-light);
+        border-color: var(--success-color);
+    }
+    #result-card.incorrect {
+        background-color: var(--danger-light);
+        border-color: var(--danger-color);
+    }
+    #result-card.processing {
+        background-color: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+    #result-card.error {
+        background-color: var(--warning-light);
+        border-color: var(--warning-color);
+    }
+
+    #result-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    #result-card.correct #result-icon { color: var(--success-color); }
+    #result-card.incorrect #result-icon { color: var(--danger-color); }
+    #result-card.processing #result-icon { color: var(--primary-color); }
+    #result-card.error #result-icon { color: var(--warning-color); }
+
+
+    #result-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    #result-message {
+        font-size: 1rem;
+        color: var(--muted-text-color);
+    }
+
+    .nav-buttons {
+        margin-top: 2rem;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5 exercise-container">
+
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-transparent p-0">
+            <li class="breadcrumb-item"><a href="{% url 'course_detail' chapter.course.id %}">{{ chapter.course.title }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'chapter_exercises' chapter.id %}">{{ chapter.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Bài tập</li>
+        </ol>
+    </nav>
+
+    <div class="question-card">
+        <p class="question-text">Thực hiện ký hiệu cho:</p>
+        <h1 class="question-target">"{{ exercise.question }}"</h1>
+        {% if exercise.video_guide %}
+            <a href="{{ exercise.video_guide.url }}" target="_blank" class="btn btn-sm btn-outline-secondary mt-2">
+                <i class="fas fa-video me-2"></i>Xem video hướng dẫn
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="video-wrapper">
+        <div class="video-header">
+            <h5>Màn hình camera</h5>
+            <div id="recording-status">
+                <span id="recording-indicator"></span>
+                <span id="recording-text">Sẵn sàng</span>
+            </div>
+        </div>
+        <div class="video-main">
+            <video id="webcam" autoplay playsinline muted></video>
+        </div>
+        <div class="controls">
+            <button id="start-record" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-video me-2"></i>Bắt đầu ghi
+            </button>
+        </div>
+    </div>
+    
+    <div id="result-card">
+        <div id="result-icon"><i class="fas fa-spinner fa-spin"></i></div>
+        <h3 id="result-title"></h3>
+        <p id="result-message"></p>
+    </div>
+
+    <div class="d-flex justify-content-between nav-buttons">
+        {% if prev_exercise %}
+            <a href="{% url 'exercise_detail' prev_exercise.id %}" class="btn btn-outline-primary"><i class="fas fa-arrow-left me-2"></i>Bài trước</a>
+        {% endif %}
+        <a id="next-exercise-link" href="{% if next_exercise %}{% url 'exercise_detail' next_exercise.id %}{% else %}{% url 'chapter_exercises' chapter.id %}{% endif %}" class="btn btn-success ms-auto d-none">
+            {% if next_exercise %}Bài tiếp theo{% else %}Hoàn thành chương{% endif %}<i class="fas fa-arrow-right ms-2"></i>
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('webcam');
+    const startBtn = document.getElementById('start-record');
+    const resultCard = document.getElementById('result-card');
+    const resultIcon = document.getElementById('result-icon');
+    const resultTitle = document.getElementById('result-title');
+    const resultMessage = document.getElementById('result-message');
+    const nextExerciseLink = document.getElementById('next-exercise-link');
+    const recordingStatus = document.getElementById('recording-status');
+    const recordingText = document.getElementById('recording-text');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
+
+    async function setupWebcam() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            video.srcObject = stream;
+        } catch (err) {
+            console.error("Lỗi truy cập webcam: ", err);
+            showResult('error', 'Lỗi Webcam', 'Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập của trình duyệt và đảm bảo bạn đang dùng kết nối HTTPS.');
+            startBtn.disabled = true;
+        }
+    }
+
+    function showResult(state, title, message) {
+        resultCard.style.display = 'block';
+        resultCard.className = ``;
+        resultCard.classList.add(state);
+
+        let iconClass = 'fas fa-info-circle';
+        if (state === 'correct') iconClass = 'fas fa-check-circle';
+        if (state === 'incorrect') iconClass = 'fas fa-times-circle';
+        if (state === 'processing') iconClass = 'fas fa-spinner fa-spin';
+        if (state === 'error') iconClass = 'fas fa-exclamation-triangle';
+
+        resultIcon.innerHTML = `<i class="${iconClass}"></i>`;
+        resultTitle.textContent = title;
+        resultMessage.innerHTML = message;
+    }
+
+    startBtn.addEventListener('click', () => {
+        if (!stream) {
+            showResult('error', 'Lỗi Webcam', 'Camera chưa sẵn sàng. Vui lòng cấp quyền và thử lại.');
+            return;
+        }
+
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+        mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            recordedChunks = [];
+            sendVideoToServer(blob);
+        };
+        
+        mediaRecorder.onstart = () => {
+            startBtn.classList.remove('btn-primary');
+            startBtn.classList.add('btn-danger');
+            startBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Đang ghi...';
+        };
+
+        recordedChunks = [];
+        mediaRecorder.start();
+        startBtn.disabled = true;
+
+        recordingStatus.classList.add('recording');
+        recordingText.textContent = 'Đang ghi...';
+
+        showResult('processing', 'Đang ghi hình', 'Hãy thực hiện ký hiệu của bạn. Tự động dừng sau 3 giây.');
+
+        setTimeout(() => {
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-video me-2"></i>Ghi lại';
+                startBtn.classList.remove('btn-danger');
+                startBtn.classList.add('btn-primary');
+                recordingStatus.classList.remove('recording');
+                recordingText.textContent = 'Đang xử lý...';
+                showResult('processing', 'Đang xử lý', 'Hệ thống đang phân tích video của bạn, vui lòng chờ.');
+            }
+        }, 3000);
+    });
+
+    async function sendVideoToServer(blob) {
+        const formData = new FormData();
+        formData.append('video', blob, 'exercise_video.webm');
+
+        try {
+            const response = await fetch("{% url 'exercise_detail' exercise.id %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                showResult('error', 'Lỗi xử lý', data.error);
+            } else {
+                if (data.correct) {
+                    showResult('correct', 'Chính xác!', `Bạn đã thực hiện đúng ký hiệu: <strong>${data.prediction}</strong>`);
+                    nextExerciseLink.classList.remove('d-none');
+                } else {
+                    showResult('incorrect', 'Chưa đúng', `Hệ thống nhận diện được: <strong>${data.prediction}</strong>. Vui lòng thử lại!`);
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi gửi video:', error);
+            showResult('error', 'Lỗi Mạng', 'Không thể kết nối đến máy chủ để kiểm tra kết quả.');
+        }
+    }
+
+    {% if is_completed %}
+        nextExerciseLink.classList.remove('d-none');
+    {% endif %}
+
+    setupWebcam();
+});
+</script>
+{% endblock %}

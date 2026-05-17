@@ -1,0 +1,275 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}Chi tiết cuộc trò chuyện{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-box {
+        height: 500px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    .message {
+        max-width: 75%;
+        padding: 0.5rem 0.75rem;
+        border-radius: 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .message-sent {
+        align-self: flex-end;
+        background-color: var(--primary-color);
+        color: white;
+    }
+    .message-received {
+        align-self: flex-start;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+    .message .sender {
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+    .message .timestamp {
+        font-size: 0.7rem;
+        align-self: flex-end;
+        margin-top: 0.2rem;
+        opacity: 0.8;
+    }
+    .message-sent .timestamp { color: #e0e0e0; }
+    .message-received .timestamp { color: #6c757d; }
+
+    #reply-form .form-control {
+        border-right: 0;
+    }
+     #reply-form .btn {
+        border-radius: 0 0.25rem 0.25rem 0 !important;
+    }
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 10px;
+    }
+    .message-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div class="d-flex align-items-center">
+            <a href="{% url 'inbox' %}" class="btn btn-light me-3"><i class="fas fa-arrow-left"></i></a>
+            <img src="{% if conversation.user.userprofile.avatar %}{{ conversation.user.userprofile.avatar.url }}{% else %}{% static 'path/to/default/avatar.png' %}{% endif %}" class="avatar-sm" alt="Avatar">
+            <div class="ms-2">
+                <h2 class="h4 mb-0">{{ conversation.user.username }}</h2>
+                {% if is_support_staff %}
+                    <small class="text-muted">
+                        Phụ trách bởi: 
+                        {% if conversation.assignee %}
+                            <strong>{{ conversation.assignee.username }}</strong>
+                        {% else %}
+                            <strong class="text-danger">Chưa có</strong>
+                        {% endif %}
+                    </small>
+                {% endif %}
+            </div>
+        </div>
+        {% if is_support_staff and conversation.assignee == request.user %}
+            <button class="btn btn-sm btn-outline-danger mt-2 mt-md-0" id="delete-conversation-btn">Xóa cuộc trò chuyện</button>
+        {% endif %}
+    </div>
+
+    <div id="chat-box" class="border p-3 mb-3 chat-box">
+        {% for message in messages_list %}
+            <div class="message {% if message.sender == request.user %}message-sent{% else %}message-received{% endif %}" data-message-id="{{ message.id }}">
+                <div class="message-header">
+                     {% if message.sender != request.user %}
+                        <img src="{% if message.sender.userprofile.avatar %}{{ message.sender.userprofile.avatar.url }}{% else %}{% static 'path/to/default/avatar.png' %}{% endif %}" class="avatar-sm" alt="Avatar">
+                     {% endif %}
+                    <strong class="sender">{{ message.sender.username }}</strong>
+                </div>
+                <div>{{ message.content|linebreaksbr }}</div>
+                <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form id="reply-form" method="post" autocomplete="off">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" id="reply-content" class="form-control" placeholder="Nhập tin nhắn của bạn...">
+            <button type="submit" class="btn btn-primary" id="send-button">
+                <i class="fas fa-paper-plane"></i> Gửi
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatBox = document.getElementById('chat-box');
+    const replyForm = document.getElementById('reply-form');
+    const contentInput = document.getElementById('reply-content');
+    const sendButton = document.getElementById('send-button');
+    const deleteConversationBtn = document.getElementById('delete-conversation-btn');
+
+    const conversationId = "{{ conversation.id }}";
+    const currentUserId = "{{ request.user.id }}";
+    const currentUserUsername = "{{ request.user.username }}";
+    const currentUserAvatarUrl = "{% if request.user.userprofile.avatar %}{{ request.user.userprofile.avatar.url }}{% else %}{% static 'path/to/default/avatar.png' %}{% endif %}";
+    let lastMessageId = "{{ messages_list.last.id|default:0 }}";
+    let pollingInterval;
+
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function appendMessage(msg) {
+        const isSent = msg.sender.id == currentUserId;
+        const messageClass = isSent ? 'message-sent' : 'message-received';
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${messageClass}`;
+        messageDiv.dataset.messageId = msg.id;
+
+        let avatarImg = '';
+        if (!isSent && msg.sender.avatar_url) {
+            avatarImg = `<img src="${msg.sender.avatar_url}" class="avatar-sm" alt="Avatar">`;
+        }
+
+        messageDiv.innerHTML = `
+            <div class="message-header">
+                ${avatarImg}
+                <strong class="sender">${msg.sender.username}</strong>
+            </div>
+            <div>${msg.content.replace(/\n/g, '<br>')}</div>
+            <span class="timestamp">${msg.timestamp}</span>
+        `;
+        
+        chatBox.appendChild(messageDiv);
+        if (!isNaN(msg.id)) {
+          lastMessageId = Math.max(lastMessageId, msg.id);
+        }
+    }
+
+    async function fetchNewMessages() {
+        try {
+            const response = await fetch(`{% url 'get_conversation_messages' conversation.id %}?last_message_id=${lastMessageId}`);
+            const data = await response.json();
+
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(appendMessage);
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy tin nhắn mới:', error);
+        }
+    }
+
+    async function sendMessage(e) {
+        e.preventDefault();
+        const content = contentInput.value.trim();
+        if (!content) return;
+
+        contentInput.disabled = true;
+        sendButton.disabled = true;
+
+        const now = new Date();
+        const optimisticMessage = {
+            id: `temp-${now.getTime()}`,
+            sender: { id: currentUserId, username: currentUserUsername, avatar_url: currentUserAvatarUrl },
+            content: content,
+            timestamp: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+        };
+        appendMessage(optimisticMessage);
+        scrollToBottom();
+        contentInput.value = '';
+
+        try {
+            const response = await fetch(`{% url 'send_reply_api' conversation.id %}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `content=${encodeURIComponent(content)}`
+            });
+
+            const data = await response.json();
+            const tempMessageElem = document.querySelector(`[data-message-id='${optimisticMessage.id}']`);
+            if (data.status === 'success') {
+                if (tempMessageElem) {
+                    tempMessageElem.dataset.messageId = data.message.id;
+                    lastMessageId = data.message.id;
+                }
+            } else {
+                if (tempMessageElem) tempMessageElem.style.border = '1px solid red';
+                alert('Không thể gửi tin nhắn: ' + data.message);
+            }
+        } catch (error) {
+            const tempMessageElem = document.querySelector(`[data-message-id='${optimisticMessage.id}']`);
+            if (tempMessageElem) tempMessageElem.style.border = '1px solid red';
+            alert('Đã xảy ra lỗi mạng. Vui lòng thử lại.');
+        } finally {
+            contentInput.disabled = false;
+            sendButton.disabled = false;
+            contentInput.focus();
+        }
+    }
+
+    if (deleteConversationBtn) {
+        deleteConversationBtn.addEventListener('click', async () => {
+             if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn cuộc trò chuyện này không?')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/conversation/${conversationId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    window.location.href = "{% url 'inbox' %}";
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (error) {
+                console.error("Lỗi khi xóa cuộc trò chuyện:", error);
+                alert('Đã xảy ra lỗi. Vui lòng thử lại.');
+            }
+        });
+    }
+
+    // Initial setup
+    scrollToBottom();
+    replyForm.addEventListener('submit', sendMessage);
+    pollingInterval = setInterval(fetchNewMessages, 3000);
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+            clearInterval(pollingInterval);
+        } else {
+            fetchNewMessages();
+            pollingInterval = setInterval(fetchNewMessages, 3000);
+        }
+    });
+});
+</script>
+{% endblock %}

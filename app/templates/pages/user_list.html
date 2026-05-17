@@ -1,0 +1,280 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ page_title }} - Ngôn Ngữ Ký Hiệu{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    /* Sidebar */
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) {
+        .sidebar-modern { display: flex; }
+    }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover {
+        background-color: #f1f5f9;
+        color: var(--primary);
+    }
+    .nav-link-custom.active {
+        background-color: #eef2ff;
+        color: var(--primary);
+    }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    /* Main Content */
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .content-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .card-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .card-head h3 { font-size: 16px; font-weight: 600; margin: 0; color: #334155; }
+
+    .card-body-custom { padding: 24px; }
+
+    .table-pro { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .table-pro th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 12px 24px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    .table-pro td {
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        color: #334155;
+    }
+    .table-pro tr:last-child td { border-bottom: none; }
+    .table-pro .fw-bold { color: #1e293b; }
+
+    .badge-role {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .role-admin { background-color: #dcfce7; color: #166534; }
+    .role-user { background-color: #f1f5f9; color: #475569; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link-custom">
+                    <i class="fas fa-home-alt"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_list' %}" class="nav-link-custom">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            </li>
+        </ul>
+
+        {% if user.is_staff %}
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'user_list' %}" class="nav-link-custom active">
+                    <i class="fas fa-users-cog"></i> Quản lý Người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_management' %}" class="nav-link-custom">
+                    <i class="fas fa-book"></i> Quản lý Khoá học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'model_management' %}" class="nav-link-custom">
+                    <i class="fas fa-robot"></i> Quản lý Model AI
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/" class="nav-link-custom">
+                    <i class="fas fa-user-shield"></i> Hệ thống Admin
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+
+        <div class="mt-auto p-3">
+             <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border-radius: 50%;">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-truncate" style="font-size: 14px;">{{ user.username }}</div>
+                    <div class="text-muted text-truncate" style="font-size: 12px;">{{ user.is_staff|yesno:"Administrator,Học viên" }}</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="content-header">
+            <div class="page-heading">
+                <h2>{{ page_title }}</h2>
+                <p>Thêm, sửa, và xoá thông tin người dùng trong hệ thống.</p>
+            </div>
+            <a href="{% url 'user_add' %}" class="btn btn-primary px-4 py-2" style="font-weight: 600; border-radius: 8px;">
+                <i class="fas fa-plus me-2"></i> Thêm người dùng
+            </a>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-body-custom p-0">
+                <div class="table-responsive">
+                    <table class="table-pro">
+                        <thead>
+                            <tr>
+                                <th>Tên Người Dùng</th>
+                                <th>Email</th>
+                                <th>Vai Trò</th>
+                                <th>Ngày Tham Gia</th>
+                                <th class="text-end">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in users %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ u.username }}</div>
+                                </td>
+                                <td>{{ u.email }}</td>
+                                <td>
+                                    {% if u.is_staff %}
+                                        <span class="badge-role role-admin">Admin</span>
+                                    {% else %}
+                                        <span class="badge-role role-user">Học viên</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <a href="{% url 'user_edit' u.id %}" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                                        {% if request.user.id != u.id %}
+                                        <form action="{% url 'user_delete' u.id %}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xoá người dùng `{{ u.username }}` không?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

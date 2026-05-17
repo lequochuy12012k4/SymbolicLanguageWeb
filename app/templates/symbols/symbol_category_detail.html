@@ -1,0 +1,98 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-header {
+        background-color: #f8f9fa;
+        padding: 2.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .breadcrumb-item a {
+        color: #4f46e5;
+        text-decoration: none;
+    }
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+
+    .symbol-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border-radius: 12px;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .symbol-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .card-img-container {
+        height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+    }
+    
+    .symbol-card-img {
+        max-height: 100px;
+        max-width: 100px;
+        object-fit: contain;
+    }
+
+    .symbol-card .card-body {
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Category Header -->
+<div class="category-header">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent p-0 m-0">
+                <li class="breadcrumb-item"><a href="{% url 'symbol_library' %}">Thư viện</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+            </ol>
+        </nav>
+        <h1 class="display-5 fw-bold mt-2">{{ category.name }}</h1>
+        <p class="lead text-muted">{{ category.description }}</p>
+    </div>
+</div>
+
+
+<div class="container py-5">
+    {% if not symbols %}
+        <div class="card card-body text-center p-5">
+            <p class="text-muted mb-0">Danh mục này hiện chưa có ký hiệu nào. Nội dung đang được cập nhật!</p>
+        </div>
+    {% else %}
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-4">
+            {% for symbol in symbols %}
+                <div class="col">
+                    <a href="{% url 'symbol_detail' symbol.slug %}" class="card h-100 shadow-sm symbol-card">
+                         <div class="card-img-container">
+                            {% if symbol.image %}
+                                <img src="{{ symbol.image.url }}" alt="{{ symbol.name }}" class="symbol-card-img">
+                            {% else %}
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-0">{{ symbol.name }}</h6>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

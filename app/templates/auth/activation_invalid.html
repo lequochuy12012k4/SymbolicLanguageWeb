@@ -1,0 +1,22 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Link Kích Hoạt Không Hợp Lệ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Rất tiếc, đã có lỗi xảy ra!</h4>
+                <p>Link kích hoạt tài khoản của bạn không hợp lệ hoặc đã hết hạn.</p>
+                <hr>
+                <p class="mb-0">Điều này có thể xảy ra nếu bạn đã sử dụng link này rồi, hoặc link đã bị sao chép sai. Vui lòng thử đăng nhập hoặc đăng ký lại.</p>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'login' %}" class="btn btn-primary me-2">Thử Đăng Nhập</a>
+                <a href="{% url 'register' %}" class="btn btn-secondary">Đăng Ký Lại</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

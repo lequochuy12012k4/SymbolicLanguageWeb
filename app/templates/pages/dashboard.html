@@ -1,0 +1,327 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px;
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    /* Sidebar */
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) { .sidebar-modern { display: flex; } }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover { background-color: #f1f5f9; color: var(--primary); }
+    .nav-link-custom.active { background-color: #eef2ff; color: var(--primary); }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    /* Main Content */
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .content-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    /* Stats Grid */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); text-decoration: none; color: inherit; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); transition: all 0.2s ease-out; }
+    .stat-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #0f172a; line-height: 1; }
+    .stat-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-top: 12px; }
+    .bg-indigo { background: #e0e7ff; color: #4338ca; }
+    .bg-emerald { background: #d1fae5; color: #059669; }
+    .bg-amber { background: #fef3c7; color: #d97706; }
+    .bg-rose { background: #ffe4e6; color: #e11d48; }
+    .bg-cyan { background: #cffafe; color: #0891b2; }
+    .bg-sky { background: #e0f2fe; color: #0284c7; }
+    .bg-fuchsia { background: #fce7f3; color: #c026d3; }
+    .stat-value-small { font-size: 18px; font-weight: 700; }
+
+    /* Dashboard Cards */
+    .glass-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); margin-bottom: 24px; overflow: hidden; }
+    .card-head { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .card-head h3 { font-size: 16px; font-weight: 600; margin: 0; color: #334155; }
+    .card-body-custom { padding: 24px; }
+
+    /* Charts Container */
+    .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+    @media (max-width: 1200px) { .charts-row { grid-template-columns: 1fr; } }
+    .chart-wrapper { height: 320px; position: relative; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link-custom active">
+                    <i class="fas fa-home-alt"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_list' %}" class="nav-link-custom">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'user_list' %}" class="nav-link-custom">
+                    <i class="fas fa-users-cog"></i> Quản lý Người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_management' %}" class="nav-link-custom">
+                    <i class="fas fa-book"></i> Quản lý Khoá học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'model_management' %}" class="nav-link-custom">
+                    <i class="fas fa-robot"></i> Quản lý Model AI
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/" class="nav-link-custom">
+                    <i class="fas fa-user-shield"></i> Hệ thống Admin
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto p-3">
+            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border-radius: 50%;">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-truncate" style="font-size: 14px;">{{ user.username }}</div>
+                    <div class="text-muted text-truncate" style="font-size: 12px;">Administrator</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="content-header">
+            <div class="page-heading">
+                <h2>Xin chào, {{ user.username }}!</h2>
+                <p>Cập nhật tình hình học tập và quản lý hệ thống của bạn.</p>
+            </div>
+            <a href="{% url 'course_management' %}" class="btn btn-primary px-4 py-2" style="font-weight: 600; border-radius: 8px;">
+                <i class="fas fa-book me-2"></i> Quản lý Khoá học
+            </a>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <a href="{% url 'chatbot_api_management' %}" class="stat-card">
+                <span class="stat-label">Nhà cung cấp AI</span>
+                <div class="stat-value stat-value-small">{{ active_provider.name|default:'Chưa đặt' }}</div>
+                <div class="stat-icon-box bg-sky"><i class="fas fa-cogs"></i></div>
+            </a>
+            <a href="{% url 'chatbot_api_management' %}" class="stat-card">
+                <span class="stat-label">Model API đang dùng</span>
+                <div class="stat-value stat-value-small">{{ active_api_model.model_name|default:'Chưa đặt' }}</div>
+                <div class="stat-icon-box bg-fuchsia"><i class="fas fa-brain"></i></div>
+            </a>
+            <div class="stat-card">
+                <span class="stat-label">Người dùng</span>
+                <div class="stat-value">{{ total_users }}</div>
+                <div class="stat-icon-box bg-indigo"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Khoá học</span>
+                <div class="stat-value">{{ total_courses }}</div>
+                <div class="stat-icon-box bg-emerald"><i class="fas fa-graduation-cap"></i></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Ký hiệu</span>
+                <div class="stat-value">{{ total_symbols }}</div>
+                <div class="stat-icon-box bg-cyan"><i class="fas fa-sign-language"></i></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Ghi danh</span>
+                <div class="stat-value">{{ total_enrollments }}</div>
+                <div class="stat-icon-box bg-amber"><i class="fas fa-id-card"></i></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Đánh giá</span>
+                <div class="stat-value">{{ total_reviews }}</div>
+                <div class="stat-icon-box bg-rose"><i class="fas fa-star"></i></div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="glass-card">
+                <div class="card-head"><h3>Thống kê ghi danh</h3></div>
+                <div class="card-body-custom">
+                    <div class="chart-wrapper">
+                        <canvas id="enrollmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card">
+                <div class="card-head"><h3>Trạng thái khoá học</h3></div>
+                <div class="card-body-custom">
+                    <div class="chart-wrapper">
+                        <canvas id="completionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart.js Configuration
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    // Enrollment Chart (Area Chart)
+    new Chart(document.getElementById('enrollmentChart'), {
+        type: 'line',
+        data: {
+            labels: {{ enrollment_labels|safe }},
+            datasets: [{
+                data: {{ enrollment_counts|safe }},
+                borderColor: '#4f46e5',
+                borderWidth: 3,
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.1)');
+                    gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+                    return gradient;
+                },
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#4f46e5',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, border: { display: false } },
+                y: { grid: { color: '#f1f5f9' }, border: { display: false }, beginAtZero: true }
+            }
+        }
+    });
+
+    // Completion Chart (Donut)
+    new Chart(document.getElementById('completionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ completion_labels|safe }},
+            datasets: [{
+                data: {{ completion_counts|safe }},
+                backgroundColor: ['#f43f5e', '#10b981'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+            },
+            cutout: '75%'
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

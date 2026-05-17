@@ -1,0 +1,240 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Dự đoán AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --content-bg: #f8fafc;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+    }
+
+    body {
+        background-color: var(--content-bg) !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+
+    .predict-header {
+        background-color: var(--card-bg);
+        padding: 2.5rem 0;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .predict-header h1 {
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    #video-container {
+        position: relative;
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        background-color: #1e293b;
+    }
+    #video {
+        width: 100%;
+        display: block;
+        transform: scaleX(-1); /* Mirror effect */
+    }
+
+    .controls-container {
+        padding: 1.5rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        text-align: center;
+    }
+
+    .result-card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    #prediction-text {
+        font-size: clamp(2rem, 10vw, 5rem);
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1.1;
+    }
+    
+    .result-label {
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .recording-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background-color: red;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+        margin-left: 8px;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+    }
+    
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: .2em;
+        margin-left: 8px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="predict-header">
+    <div class="container">
+        <h1 class="display-5">Trình Dịch AI</h1>
+        <p class="lead text-muted">Đưa ký hiệu của bạn vào trong khung hình và để AI của chúng tôi dịch nó ra văn bản.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- Left Column: Camera and Controls -->
+        <div class="col-lg-7">
+            <div id="video-container">
+                <video id="video" autoplay playsinline muted></video>
+            </div>
+            <div class="controls-container mt-3">
+                 <button id="start-button" class="btn btn-success btn-lg px-5">
+                    <i class="fas fa-play me-2"></i> Bắt đầu
+                </button>
+                <button id="stop-button" class="btn btn-danger btn-lg px-5" style="display:none;">
+                    <i class="fas fa-stop me-2"></i> Dừng
+                    <span class="recording-indicator"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column: Prediction Result -->
+        <div class="col-lg-5">
+            <div class="result-card">
+                 <p class="result-label">KẾT QUẢ DỰ ĐOÁN</p>
+                <div id="prediction-display">
+                     <h2 id="prediction-text" class="text-muted fw-normal" style="font-size: 1.5rem;">Chờ tín hiệu...</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const video = document.getElementById('video');
+    const startButton = document.getElementById('start-button');
+    const stopButton = document.getElementById('stop-button');
+    const predictionText = document.getElementById('prediction-text');
+    const predictionDisplay = document.getElementById('prediction-display');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
+
+    async function setupCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { aspectRatio: 16/9 },
+                audio: false 
+            });
+            video.srcObject = stream;
+        } catch (err) {
+            console.error("Lỗi truy cập camera: ", err);
+            predictionText.innerHTML = '<span class="text-danger small">Không thể truy cập camera. Vui lòng cấp quyền và tải lại trang.</span>';
+            startButton.disabled = true;
+        }
+    }
+
+    function startRecording() {
+        recordedChunks = [];
+        const mimeType = 'video/webm;codecs=vp8';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            alert("Trình duyệt của bạn không hỗ trợ quay video định dạng webm.");
+            return;
+        }
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) recordedChunks.push(event.data);
+        };
+        mediaRecorder.start();
+
+        predictionText.textContent = '...';
+        predictionText.classList.add("text-muted");
+
+        startButton.style.display = 'none';
+        stopButton.style.display = 'inline-block';
+    }
+
+    async function stopRecordingAndPredict() {
+        mediaRecorder.stop();
+        stopButton.disabled = true;
+        stopButton.innerHTML = 'Đang xử lý <span class="spinner-border spinner-border-sm"></span>';
+
+        mediaRecorder.onstop = async () => {
+            const videoBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+            const formData = new FormData();
+            formData.append('video', videoBlob, 'recorded_video.webm');
+
+            try {
+                const response = await fetch("{% url 'predict_symbol' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    predictionText.textContent = result.prediction || 'Không nhận dạng được';
+                    predictionText.classList.remove("text-muted");
+                } else {
+                    throw new Error(result.error || `Lỗi server: ${response.status}`);
+                }
+
+            } catch (err) {
+                console.error('Lỗi khi gửi video dự đoán:', err);
+                predictionText.innerHTML = `<span class="text-danger small">Lỗi: ${err.message}</span>`;
+            } finally {
+                // Reset UI
+                startButton.style.display = 'inline-block';
+                stopButton.style.display = 'none';
+                stopButton.disabled = false;
+                stopButton.innerHTML = '<i class="fas fa-stop me-2"></i> Dừng <span class="recording-indicator"></span>';
+            }
+        };
+    }
+
+    window.addEventListener('load', () => {
+        setupCamera();
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecordingAndPredict);
+    });
+</script>
+{% endblock %}

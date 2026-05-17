@@ -1,0 +1,12 @@
+asgiref
+cloudinary
+django-cors-headers
+Django
+djangorestframework
+pillow
+sqlparse
+google-generativeai
+python-dotenv
+tensorflow
+opencv-python
+mediapipe

@@ -1,0 +1,340 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Cộng đồng{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f0f2f5;
+    }
+    .card {
+        border-radius: 1.2rem;
+    }
+    .form-control.rounded-pill {
+        background-color: #f0f2f5;
+        border: none;
+        transition: background-color .2s;
+    }
+    .form-control.rounded-pill:hover {
+        background-color: #e4e6e9;
+    }
+    .fa-video, .fa-images, .fa-smile {
+        cursor: pointer;
+    }
+    /* Added for autosizing textarea */
+    #post-content-textarea-modal {
+        resize: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <img src="{{ user.userprofile.avatar.url }}" alt="" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                    <input type="text" class="form-control rounded-pill" placeholder="Huy ơi, bạn đang nghĩ gì thế?" data-bs-toggle="modal" data-bs-target="#createPostModal" readonly>
+                    <div class="ms-3 d-flex gap-3">
+                        <i class="fas fa-video fa-lg text-danger" data-bs-toggle="modal" data-bs-target="#createPostModal"></i>
+                        <i class="fas fa-images fa-lg text-success" data-bs-toggle="modal" data-bs-target="#createPostModal"></i>
+                        <i class="fas fa-smile fa-lg text-warning" data-bs-toggle="modal" data-bs-target="#createPostModal"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        {% for post in posts %}
+            {% include 'blog/_post.html' with post=post %}
+        {% empty %}
+            <div class="text-center py-5">
+                <p class="text-muted">Chưa có bài viết nào. Hãy là người đầu tiên!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createPostModalLabel">Tạo bài viết</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% include 'blog/_create_post_form.html' %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // --- LIKE FUNCTIONALITY ---
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const postId = this.dataset.postId;
+                const url = `/blog/post/${postId}/like/`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'ok') {
+                        const likeCountSpan = document.getElementById(`like-count-${postId}`);
+                        likeCountSpan.textContent = data.like_count;
+                        const likeIcon = this.querySelector('i');
+                        if (data.liked) {
+                            likeIcon.classList.remove('far');
+                            likeIcon.classList.add('fas', 'text-primary');
+                        } else {
+                            likeIcon.classList.remove('fas', 'text-primary');
+                            likeIcon.classList.add('far');
+                        }
+                    }
+                });
+            });
+        });
+
+        // --- COMMENT FORM SUBMISSION ---
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const postId = this.dataset.postId;
+                const url = `/blog/post/${postId}/comment/`;
+                const contentInput = this.querySelector('input[name="content"]');
+                const content = contentInput.value.trim();
+
+                if (!content) return;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/x-www-form-urlencoded', 
+                    },
+                    body: `content=${encodeURIComponent(content)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 'ok') {
+                        const commentList = document.getElementById(`comment-list-${postId}`);
+                        const newComment = data.comment;
+
+                        // Define a default avatar
+                        const defaultAvatar = 'https://res.cloudinary.com/djp6ttrb7/image/upload/v1715533353/user-default_k3v1v8.png';
+                        const avatarUrl = newComment.author.avatar ? newComment.author.avatar : defaultAvatar;
+
+                        // Build the HTML for the new comment
+                        const commentHtml = `
+                            <div class="d-flex align-items-start gap-2 mb-2 comment-container">
+                                <img src="${avatarUrl}" alt="" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                <div class="d-flex align-items-center gap-1 comment-wrapper">
+                                    <div class="px-3 py-2 comment-bubble" style="background-color: #f0f2f5; border-radius: 18px;">
+                                        <div>
+                                            <a href="#" class="fw-bold text-decoration-none text-dark small">${newComment.author.username}</a>
+                                        </div>
+                                        <p class="mb-0 small">${newComment.content}</p>
+                                    </div>
+                                    ${(newComment.author.id === {{ user.id }} || {{ user.is_staff|yesno:'true,false' }} ) ? 
+                                        `<div class="dropdown">
+                                            <button class="btn btn-sm btn-light py-0 px-1 rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 24px; height: 24px;"><i class="fas fa-ellipsis-h fa-xs"></i></button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a href="#" class="dropdown-item text-danger small delete-comment-btn" data-comment-id="${newComment.id}">Xoá</a>
+                                                </li>
+                                            </ul>
+                                        </div>` : ''
+                                    }
+                                </div>
+                            </div>
+                        `;
+
+                        commentList.insertAdjacentHTML('beforeend', commentHtml);
+                        contentInput.value = ''; // Clear input
+                        const submitBtn = document.getElementById(`submit-comment-btn-${postId}`);
+                        submitBtn.style.display = 'none'; // Hide submit button after posting
+                        
+                        const commentCountSpan = document.getElementById(`comment-count-${postId}`);
+                        commentCountSpan.textContent = parseInt(commentCountSpan.textContent) + 1;
+                    }
+                });
+            });
+        });
+
+        // --- DELETE POST FUNCTIONALITY ---
+        document.querySelectorAll('.delete-post-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Bạn có chắc muốn xoá bài viết này?')) {
+                    const postId = this.dataset.postId;
+                    const url = `/blog/post/${postId}/delete/`;
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            document.querySelector(`.post-container[data-post-id="${postId}"]`).remove();
+                        }
+                    });
+                }
+            });
+        });
+
+        // --- DELETE COMMENT FUNCTIONALITY ---
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-comment-btn')) {
+                e.preventDefault();
+                if (confirm('Bạn có chắc muốn xoá bình luận này?')) {
+                    const commentId = e.target.dataset.commentId;
+                    const url = `/blog/comment/${commentId}/delete/`;
+                    const postContainer = e.target.closest('.post-container');
+                    const postId = postContainer.dataset.postId;
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            e.target.closest('.comment-container').remove();
+                            const commentCountSpan = document.getElementById(`comment-count-${postId}`);
+                             commentCountSpan.textContent = parseInt(commentCountSpan.textContent) - 1;
+                        }
+                    });
+                }
+            }
+        });
+
+        // --- MEDIA PREVIEW FUNCTIONALITY ---
+        const imageInput = document.getElementById('id_image');
+        const videoInput = document.getElementById('id_video');
+        const mediaPreview = document.getElementById('media-preview');
+        const createPostForm = document.getElementById('create-post-form');
+
+        function handleFilePreview(event) {
+            mediaPreview.innerHTML = ''; // Clear previous preview
+            const input = event.target;
+            const file = input.files[0];
+
+            if (file) {
+                const fileURL = URL.createObjectURL(file);
+                let previewElement;
+
+                // Clear the other input
+                if (input.id === 'id_image') {
+                    videoInput.value = '';
+                } else if (input.id === 'id_video') {
+                    imageInput.value = '';
+                }
+
+                if (file.type.startsWith('image/')) {
+                    previewElement = document.createElement('img');
+                    previewElement.style.maxHeight = '300px';
+                } else if (file.type.startsWith('video/')) {
+                    previewElement = document.createElement('video');
+                    previewElement.controls = true;
+                    previewElement.style.maxHeight = '300px';
+                }
+
+                if (previewElement) {
+                    previewElement.src = fileURL;
+                    previewElement.style.width = '100%';
+                    previewElement.style.objectFit = 'cover';
+                    previewElement.style.borderRadius = '0.5rem';
+                    mediaPreview.appendChild(previewElement);
+                }
+            }
+        }
+
+        imageInput.addEventListener('change', handleFilePreview);
+        videoInput.addEventListener('change', handleFilePreview);
+
+        // Reset the preview when the modal is closed
+        const createPostModal = document.getElementById('createPostModal');
+        createPostModal.addEventListener('hidden.bs.modal', function () {
+            mediaPreview.innerHTML = '';
+            createPostForm.reset();
+            // Reset textarea height
+            const textarea = document.getElementById('post-content-textarea-modal');
+            textarea.style.height = 'auto'; // Reset to auto
+            textarea.rows = 4; // Reset to initial rows
+        });
+
+        // Autosize textarea in modal
+        const textarea = document.getElementById('post-content-textarea-modal');
+        textarea.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Focus and resize on modal show
+        createPostModal.addEventListener('shown.bs.modal', function () {
+            const textarea = document.getElementById('post-content-textarea-modal');
+            textarea.focus();
+            textarea.dispatchEvent(new Event('input'));
+        });
+
+        // Show/hide comment submit button
+        document.querySelectorAll('.comment-input-field').forEach(input => {
+            input.addEventListener('input', function() {
+                const postId = this.closest('.comment-form').dataset.postId;
+                const submitBtn = document.getElementById(`submit-comment-btn-${postId}`);
+                if (this.value.trim() !== '') {
+                    submitBtn.style.display = 'block';
+                } else {
+                    submitBtn.style.display = 'none';
+                }
+            });
+        });
+
+    });
+
+    function toggleCommentForm(postId) {
+        const commentForm = document.getElementById(`comment-form-container-${postId}`);
+        if (commentForm.style.display === 'none') {
+            commentForm.style.display = 'block';
+            document.getElementById(`comment-input-${postId}`).focus();
+        } else {
+            commentForm.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

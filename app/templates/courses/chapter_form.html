@@ -1,0 +1,22 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ action }} Chapter - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ action }} Chapter for "{{ course.title }}"</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ chapter.title|default:'' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="order" class="form-label">Order</label>
+            <input type="number" class="form-control" id="order" name="order" value="{{ chapter.order|default:'' }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">{{ action }} Chapter</button>
+        <a href="{% url 'edit_course' course.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kích hoạt tài khoản</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td align="center">
+                <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 24px; background-color: #4f46e5;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Chào mừng tới Ngôn Ngữ Ký Hiệu!</h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 32px 40px; color: #0f172a; line-height: 1.6;">
+                            <h2 style="color: #1e293b; font-size: 20px; margin-top: 0;">Xin chào {{ user.username }},</h2>
+                            <p>Cảm ơn bạn đã đăng ký. Chỉ còn một bước nữa thôi.</p>
+                            <p>Vui lòng nhấp vào nút bên dưới để kích hoạt tài khoản của bạn và bắt đầu khám phá các khoá học:</p>
+                            <p style="text-align: center; margin: 32px 0;">
+                                <a href="{{ protocol }}://{{ domain }}{% url 'activate' uidb64=uid token=token %}" style="background-color: #4f46e5; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px;">Kích hoạt tài khoản</a>
+                            </p>
+                            <p style="font-size: 14px; color: #64748b;">Nếu nút không hoạt động, hãy sao chép và dán liên kết sau vào trình duyệt của bạn:</p>
+                            <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">{{ protocol }}://{{ domain }}{% url 'activate' uidb64=uid token=token %}</p>
+                            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
+                            <p style="color: #64748b;">Nếu bạn không yêu cầu tạo tài khoản, vui lòng bỏ qua email này.</p>
+                            <p style="color: #64748b;">Trân trọng,<br>Đội ngũ Ngôn Ngữ Ký Hiệu</p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 24px; font-size: 12px; color: #64748b; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+                            &copy; {% now "Y" %} Ngôn Ngữ Ký Hiệu. Mọi quyền được bảo lưu.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

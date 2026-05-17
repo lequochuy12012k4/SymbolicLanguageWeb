@@ -1,0 +1,204 @@
+<style>
+    #ai-chat-toggle-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: var(--primary-color);
+        color: white;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1031;
+    }
+
+    #ai-chat-widget {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 370px;
+        height: 500px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 1030;
+    }
+    
+    #ai-chat-widget.collapse:not(.show) {
+        display: none;
+    }
+
+    #ai-chat-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 1rem;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #ai-chat-header .close-btn, #ai-chat-header .clear-btn {
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    #ai-chat-body {
+        flex-grow: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .chat-message {
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+    .user-message {
+        background-color: #e9e9f0;
+        align-self: flex-end;
+    }
+    .bot-message {
+        background-color: #f1f5f9;
+        align-self: flex-start;
+    }
+    #ai-chat-footer {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 0.5rem;
+    }
+    #ai-chat-input {
+        flex-grow: 1;
+        border-radius: 9999px;
+    }
+    #ai-chat-send {
+        border-radius: 50%;
+    }
+</style>
+
+<!-- AI Chat Toggle Button -->
+<div id="ai-chat-toggle-button" data-bs-toggle="collapse" data-bs-target="#ai-chat-widget" aria-expanded="false" aria-controls="ai-chat-widget">
+    <i class="fas fa-robot"></i>
+</div>
+
+<!-- AI Chat Window -->
+<div class="collapse" id="ai-chat-widget">
+    <div id="ai-chat-header">
+        <span>Trợ lý AI</span>
+        <div>
+            <i class="fas fa-sync-alt clear-btn me-2" title="Xóa lịch sử"></i>
+            <i class="fas fa-times close-btn" title="Đóng" data-bs-toggle="collapse" data-bs-target="#ai-chat-widget"></i>
+        </div>
+    </div>
+    <div id="ai-chat-body">
+        <!-- Messages will be appended here -->
+    </div>
+    <div id="ai-chat-footer">
+        <input type="text" id="ai-chat-input" class="form-control" placeholder="Hỏi điều gì đó...">
+        <button id="ai-chat-send" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const chatWindow = document.getElementById('ai-chat-widget');
+    const clearBtn = chatWindow.querySelector('.clear-btn');
+    const chatBody = document.getElementById('ai-chat-body');
+    const input = document.getElementById('ai-chat-input');
+    const sendBtn = document.getElementById('ai-chat-send');
+
+    function addMessage(message, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('chat-message', sender === 'user' ? 'user-message' : 'bot-message');
+        msgDiv.innerHTML = message; // Use innerHTML to render markdown
+        chatBody.appendChild(msgDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage(message, 'user');
+        input.value = '';
+        
+        try {
+            const response = await fetch("{% url 'gemini_chat' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    user_id: {{ request.user.id|default:'null' }}
+                })
+            });
+
+            if (!response.ok) {
+                 throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            
+            if (data.reply) {
+                addMessage(data.reply, 'bot');
+            } else if (data.error) {
+                addMessage(`Lỗi: ${data.error}`, 'bot');
+            }
+
+        } catch (error) {
+            console.error('Error sending message to Gemini:', error);
+            addMessage('Rất tiếc, đã có lỗi xảy ra. Vui lòng thử lại.', 'bot');
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    clearBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch("{% url 'clear_chat_history' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({
+                    user_id: {{ request.user.id|default:'null' }}
+                })
+            });
+            const data = await response.json();
+            if(data.status === 'success') {
+                chatBody.innerHTML = '';
+                addMessage(data.initial_message, 'bot');
+            }
+        } catch (error) {
+            console.error('Error clearing chat history:', error);
+            addMessage('Không thể xóa lịch sử trò chuyện.', 'bot');
+        }
+    });
+
+    // Add initial message when the chat is shown for the first time
+    chatWindow.addEventListener('show.bs.collapse', function () {
+        if (chatBody.children.length === 0) { // Only add if it's empty
+             addMessage("Xin chào! Tôi là Trợ lý ảo của Ngôn Ngữ Ký Hiệu. Tôi có thể giúp gì cho bạn?", 'bot');
+        }
+    }, { once: true }); // Run this event only once
+});
+</script>

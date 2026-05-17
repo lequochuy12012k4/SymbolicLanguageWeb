@@ -1,0 +1,124 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Bài tập - {{ chapter.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4f46e5;
+        --light-gray-color: #f8f9fa;
+        --border-color: #e5e7eb;
+        --success-color: #10b981;
+        --text-color: #1f2937;
+        --muted-text-color: #6b7280;
+    }
+
+    .breadcrumb-item a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .exercise-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .exercise-item {
+        display: flex;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .exercise-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: var(--primary-color);
+    }
+
+    .exercise-item .icon {
+        font-size: 1.5rem;
+        margin-right: 1.5rem;
+        width: 40px;
+        text-align: center;
+    }
+
+    .exercise-item .icon.completed {
+        color: var(--success-color);
+    }
+
+    .exercise-item .icon.pending {
+        color: var(--muted-text-color);
+    }
+
+    .exercise-info {
+        flex-grow: 1;
+    }
+
+    .exercise-info h5 {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .exercise-info p {
+        margin-bottom: 0;
+        color: var(--muted-text-color);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'course_detail' chapter.course.id %}">{{ chapter.course.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ chapter.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">{{ chapter.title }}</h1>
+        <p class="lead text-muted">Hoàn thành các bài tập dưới đây để củng cố kiến thức của bạn.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <ul class="exercise-list">
+                {% for exercise in exercises %}
+                    <li>
+                        <a href="{% url 'exercise_detail' exercise.id %}" class="text-decoration-none">
+                            <div class="exercise-item">
+                                <div class="icon {% if exercise.id in completed_exercises %}completed{% else %}pending{% endif %}">
+                                    <i class="fas fa-{% if exercise.id in completed_exercises %}check-circle{% else %}circle{% endif %}"></i>
+                                </div>
+                                <div class="exercise-info">
+                                    <h5>Bài tập {{ forloop.counter }}: {{ exercise.question }}</h5>
+                                    <p>Trạng thái: {% if exercise.id in completed_exercises %}Đã hoàn thành{% else %}Chưa hoàn thành{% endif %}</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-muted"></i>
+                            </div>
+                        </a>
+                    </li>
+                {% empty %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Chưa có bài tập nào cho chương này.
+                    </div>
+                {% endfor %}
+            </ul>
+            
+            {% if exercises.first %}
+            <div class="text-center mt-4">
+                <a href="{% url 'exercise_detail' exercises.first.id %}" class="btn btn-primary btn-lg">Bắt đầu làm bài</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

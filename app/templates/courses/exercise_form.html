@@ -1,0 +1,50 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}
+    {{ action }} Exercise - 
+    {% if chapter %}
+        {{ chapter.title }}
+    {% else %}
+        {{ exercise.chapter.title }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>
+        {{ action }} Exercise for "
+        {% if chapter %}
+            {{ chapter.title }}
+        {% else %}
+            {{ exercise.chapter.title }}
+        {% endif %}"
+    </h2>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="question" class="form-label">Question</label>
+            <textarea class="form-control" id="question" name="question" rows="3" required>{{ exercise.question|default:'' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="order" class="form-label">Order</label>
+            <input type="number" class="form-control" id="order" name="order" value="{% if exercise %}{{ exercise.order }}{% endif %}" required>
+        </div>
+        <div class="mb-3">
+            <label for="correct_answer" class="form-label">Correct Answer</label>
+            <input type="text" class="form-control" id="correct_answer" name="correct_answer" value="{% if exercise %}{{ exercise.answer.correct_answer }}{% endif %}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">{{ action }} Exercise</button>
+        
+        {% comment %}
+        This logic correctly generates the cancel URL for both "Add" and "Edit" actions.
+        - When adding, `chapter` is in the context.
+        - When editing, `exercise` is in the context.
+        {% endcomment %}
+        {% if chapter %}
+            <a href="{% url 'edit_course' chapter.course.id %}" class="btn btn-secondary">Cancel</a>
+        {% else %}
+            <a href="{% url 'edit_course' exercise.chapter.course.id %}" class="btn btn-secondary">Cancel</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

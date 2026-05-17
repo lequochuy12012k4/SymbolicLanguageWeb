@@ -1,0 +1,43 @@
+{% comment %}
+Reusable Course Card Component - v2 (Professional)
+Expects a `course` object and `enrolled_ids` list in the context.
+{% endcomment %}
+
+<div class="course-card h-100">
+    <div class="course-card-img-top">
+        <a href="{% url 'course_detail' course.id %}">
+            {% if course.thumbnail %}
+                <img src="{{ course.thumbnail.url }}" alt="{{ course.title }} thumbnail" class="img-fluid">
+            {% else %}
+                <div class="default-thumbnail">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+            {% endif %}
+        </a>
+        <span class="course-card-category">{{ course.category }}</span>
+    </div>
+
+    <div class="course-card-body d-flex flex-column">
+        <h5 class="course-card-title">
+            <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+        </h5>
+        <p class="course-card-description">{{ course.description|truncatewords:14 }}</p>
+
+        <div class="course-card-meta mt-auto">
+            <span><i class="far fa-clock"></i> {{ course.duration|default:'N/A' }}</span>
+            <span><i class="fas fa-signal"></i> {{ course.get_difficulty_display|default:course.difficulty }}</span>
+            <span><i class="fas fa-users"></i> {{ course.courseenrollment_set.count }}</span>
+        </div>
+    </div>
+
+    <div class="course-card-footer">
+        {% if user.is_authenticated and course.id in enrolled_ids %}
+            <a href="{% url 'course_detail' course.id %}" class="btn btn-primary w-100">Tiếp tục học</a>
+        {% else %}
+             <form action="{% url 'enroll_course' course.id %}" method="post" class="w-100">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary w-100">Đăng ký học</button>
+            </form>
+        {% endif %}
+    </div>
+</div>

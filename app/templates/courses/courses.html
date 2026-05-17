@@ -1,0 +1,258 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Khóa học{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --accent: #4f46e5;
+        --accent-hover: #4338ca;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --content-bg: #f8fafc;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+    }
+
+    .courses-hero-header {
+        background-color: var(--card-bg);
+        padding: 3rem 0;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .courses-hero-header h1 {
+        font-weight: 800;
+        color: var(--text-main);
+    }
+
+    .search-filter-section {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 3rem;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+    }
+
+    .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        padding-bottom: 5rem;
+    }
+
+    .course-card-pro {
+        background: white;
+        border-radius: 1.25rem;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+
+    .course-card-pro:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        border-color: var(--accent);
+    }
+
+    .card-banner {
+        height: 140px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .card-banner i {
+        font-size: 3.5rem;
+        color: rgba(255,255,255,0.25);
+    }
+
+    .course-tag {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(255,255,255,0.9);
+        padding: 0.35rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .card-content {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .course-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+        min-height: 3.2rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .course-description {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .course-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .card-footer-pro {
+        padding-top: 1.25rem;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+
+    .price-tag {
+        font-weight: 800;
+        font-size: 1.05rem;
+        color: #10b981;
+    }
+
+    .btn-join {
+        padding: 0.5rem 1rem;
+        border-radius: 0.6rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #4f46e5;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: #eef2ff;
+        padding: 0.4rem 0.8rem;
+        border-radius: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="courses-hero-header">
+    <div class="container">
+        <h1 class="display-5">Khám phá Khoá Học</h1>
+        <p class="lead text-muted">Nâng cao kỹ năng ngôn ngữ ký hiệu của bạn với các chương trình đào tạo chuyên nghiệp.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="search-filter-section">
+        <form method="GET" action="{% url 'course_list' %}" class="row g-3 align-items-center">
+            <div class="col-xl-5 col-lg-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0" placeholder="Tìm tên khóa học..." value="{{ query|default:'' }}">
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-3">
+                <select name="category" class="form-select">
+                    <option value="">Tất cả danh mục</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-xl-3 col-lg-3">
+                <select name="difficulty" class="form-select">
+                    <option value="">Mọi cấp độ</option>
+                    {% for diff in difficulties %}
+                        <option value="{{ diff }}" {% if selected_difficulty == diff %}selected{% endif %}>{{ diff }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-xl-1 col-lg-2">
+                <button type="submit" class="btn btn-primary w-100">Lọc</button>
+            </div>
+        </form>
+    </div>
+
+    {% if courses %}
+        <div class="courses-grid">
+            {% for course in courses %}
+                <a href="{% url 'course_detail' course.id %}" class="course-card-pro text-decoration-none">
+                    <div class="card-banner">
+                        <i class="fas fa-sign-language"></i>
+                        <span class="course-tag">{{ course.category }}</span>
+                    </div>
+                    
+                    <div class="card-content">
+                        <h3 class="course-title">{{ course.title }}</h3>
+                        <p class="course-description">{{ course.description }}</p>
+                        
+                        <div class="course-meta">
+                            <span><i class="far fa-clock"></i> {{ course.duration }} giờ</span>
+                            <span><i class="fas fa-signal"></i> {{ course.difficulty }}</span>
+                            <span><i class="fas fa-star text-warning"></i> {{ course.average_rating|default_if_none:"Mới" }}</span>
+                            <span><i class="fas fa-users"></i> {{ course.courseenrollment_set.count }} học viên</span>
+                        </div>
+
+                        <div class="card-footer-pro">
+                            {% if course.id in enrolled_ids %}
+                                <div class="status-badge">
+                                    <i class="fas fa-graduation-cap"></i> Đã tham gia
+                                </div>
+                                <span class="btn btn-primary btn-join">Học tiếp</span>
+                            {% else %}
+                                <div class="price-tag">MIỄN PHÍ</div>
+                                <span class="btn btn-primary btn-join">Xem chi tiết</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <img src="https://illustrations.popsy.co/gray/searching.svg" alt="No results" style="width: 200px; opacity: 0.5;">
+            <h3 class="mt-4 text-muted">Không tìm thấy khóa học phù hợp</h3>
+            <p>Vui lòng thử lại với các tiêu chí khác.</p>
+            <a href="{% url 'course_list' %}" class="btn btn-outline-primary mt-3">Xem tất cả khóa học</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

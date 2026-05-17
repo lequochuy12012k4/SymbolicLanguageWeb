@@ -1,0 +1,112 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-item a {
+        color: #4f46e5;
+        text-decoration: none;
+    }
+
+    .media-container {
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px; /* Ensures a good height */
+    }
+
+    .media-container img, .media-container video {
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .details-card {
+        border-radius: 12px;
+        background-color: #ffffff;
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .symbol-description {
+        font-size: 1.1rem;
+        color: #495057;
+    }
+
+    .nav-buttons a {
+        text-decoration: none;
+        color: #4f46e5;
+        font-weight: 500;
+    }
+    .nav-buttons a.disabled {
+        color: #adb5bd;
+        pointer-events: none;
+        cursor: default;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-5">
+        <!-- Left Column: Media (Image/Video) -->
+        <div class="col-lg-7">
+            <div class="media-container shadow-sm">
+                {% if symbol.video %}
+                    <video controls class="w-100" autoplay loop muted>
+                        <source src="{{ symbol.video.url }}" type="video/mp4">
+                        Trình duyệt của bạn không hỗ trợ thẻ video.
+                    </video>
+                {% elif symbol.image %}
+                    <img src="{{ symbol.image.url }}" alt="{{ symbol.name }}" class="img-fluid">
+                {% else %}
+                    <div class="text-center text-muted p-5">
+                        <i class="fas fa-photo-video fa-4x mb-3"></i>
+                        <p>Chưa có hình ảnh hoặc video cho ký hiệu này.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column: Details -->
+        <div class="col-lg-5">
+            <div class="details-card border shadow-sm">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0 m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'symbol_library' %}">Thư viện</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'symbol_category_detail' symbol.category.slug %}">{{ symbol.category.name }}</a></li>
+                    </ol>
+                </nav>
+
+                <h1 class="display-5 fw-bold my-3">{{ symbol.name }}</h1>
+                
+                <div class="symbol-description mb-4">
+                    {{ symbol.description|linebreaks|default:"Chưa có mô tả chi tiết cho ký hiệu này." }}
+                </div>
+
+                <div class="mt-auto pt-4 border-top nav-buttons">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                             <a href="{% if prev_symbol %}{% url 'symbol_detail' prev_symbol.slug %}{% else %}#{% endif %}" class="{% if not prev_symbol %}disabled{% endif %}">
+                                <i class="fas fa-arrow-left me-2"></i>Ký hiệu trước
+                            </a>
+                        </div>
+                        <div>
+                            <a href="{% if next_symbol %}{% url 'symbol_detail' next_symbol.slug %}{% else %}#{% endif %}" class="{% if not next_symbol %}disabled{% endif %}">
+                                Ký hiệu tiếp theo<i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ page_title }} - Ngôn Ngữ Ký Hiệu{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) { .sidebar-modern { display: flex; } }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover { background-color: #f1f5f9; color: var(--primary); }
+    .nav-link-custom.active { background-color: #eef2ff; color: var(--primary); }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .page-heading h2 { 
+        font-weight: 700; 
+        font-size: 24px; 
+        color: #1e293b; 
+    }
+    .page-heading p { 
+        color: #64748b; 
+        font-size: 14px; 
+    }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .card-body-custom {
+        padding: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link-custom"><i class="fas fa-home-alt"></i> Dashboard</a></li>
+            <li class="nav-item"><a href="{% url 'course_list' %}" class="nav-link-custom"><i class="fas fa-book-open"></i> Khoá học</a></li>
+        </ul>
+
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item"><a href="{% url 'user_list' %}" class="nav-link-custom"><i class="fas fa-users-cog"></i> Quản lý Người dùng</a></li>
+            <li class="nav-item"><a href="{% url 'course_management' %}" class="nav-link-custom"><i class="fas fa-book"></i> Quản lý Khoá học</a></li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item"><a href="{% url 'model_management' %}" class="nav-link-custom"><i class="fas fa-robot"></i> Quản lý Model AI</a></li>
+            <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom active">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item"><a href="/admin/" class="nav-link-custom"><i class="fas fa-user-shield"></i> Hệ thống Admin</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="page-heading mb-4">
+            <h2>{{ page_title }}</h2>
+            <p>Quản lý thông tin nhà cung cấp và các API model liên quan.</p>
+        </div>
+
+        <!-- Provider Details Form -->
+        <div class="glass-card">
+            <div class="card-body-custom">
+                <h5 class="mb-4">Thông tin Nhà Cung Cấp</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Tên Nhà Cung Cấp</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ provider.name|default:'' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="api_key" class="form-label">API Key</label>
+                        <input type="password" class="form-control" id="api_key" name="api_key" value="{{ provider.api_key|default:'' }}" required>
+                        <div class="form-text">API Key được ẩn để bảo mật. Nhập giá trị mới nếu bạn muốn cập nhật.</div>
+                    </div>
+                    <button type="submit" name="save_provider" class="btn btn-primary">Lưu Nhà Cung Cấp</button>
+                    <a href="{% url 'chatbot_api_management' %}" class="btn btn-secondary">Hủy</a>
+                </form>
+            </div>
+        </div>
+
+        {% if provider %}
+        <!-- API Models Management -->
+        <div class="glass-card">
+            <div class="card-body-custom">
+                <h5 class="mb-3">Quản lý API Models</h5>
+                <p class="text-muted small mb-4">Thêm hoặc xoá các model cho nhà cung cấp {{ provider.name }}.</p>
+                
+                <!-- Add Model Form -->
+                <form method="post" class="d-flex gap-2 mb-4">
+                    {% csrf_token %}
+                    <input type="text" class="form-control" name="model_name" placeholder="Tên Model Mới, ví dụ: gemini-1.5-pro-latest" required>
+                    <button type="submit" name="add_model" class="btn btn-success flex-shrink-0">Thêm Model</button>
+                </form>
+
+                <!-- Models Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tên Model</th>
+                                <th class="text-center">Trạng Thái</th>
+                                <th class="text-end">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model in provider.api_models.all %}
+                            <tr>
+                                <td class="align-middle fw-bold">{{ model.model_name }}</td>
+                                <td class="text-center align-middle">
+                                    {% if model.is_active %}
+                                        <span class="badge bg-primary">Mặc định</span>
+                                    {% else %}
+                                         <span class="badge bg-secondary">Không hoạt động</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                         {% if not model.is_active %}
+                                            <form action="{% url 'set_active_api_model' model.id %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Đặt làm mặc định</button>
+                                            </form>
+                                        {% endif %}
+                                        <form action="{% url 'delete_api_model' model.id %}" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xoá model `{{ model.model_name }}`?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">Nhà cung cấp này chưa có API Model nào.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}

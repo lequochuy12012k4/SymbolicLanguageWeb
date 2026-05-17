@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ngôn Ngữ Ký Hiệu{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary-color: #64748b;
+            --bg-light: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-light); color: var(--text-main); margin: 0; padding: 0; }
+        header { background: white; border-bottom: 1px solid var(--border-color); padding: 0.75rem 0; position: sticky; top: 0; z-index: 1020; }
+        .navbar-brand { font-weight: 700; color: var(--primary-color) !important; display: flex; align-items: center; gap: 0.5rem; }
+        .nav-link { font-weight: 500; color: var(--text-main) !important; padding: 0.5rem 1rem !important; border-radius: 0.375rem; transition: all 0.2s; }
+        .nav-link:hover { background-color: #f1f5f9; }
+        .btn-primary { background-color: var(--primary-color); border: none; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .container-custom { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; }
+        .content-wrapper { padding: 2rem 0; }
+        footer { background: white; border-top: 1px solid var(--border-color); padding: 2rem 0; text-align: center; color: var(--text-muted); margin-top: 3rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <header>
+        <div class="container-custom">
+            <nav class="navbar navbar-expand-lg">
+                <a class="navbar-brand" href="{% url 'home' %}"><i class="fas fa-sign-language"></i> <span>Ngôn Ngữ Ký Hiệu</span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Trang Chủ</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'course_list' %}">Khoá Học</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'predict_symbol' %}">Dự Đoán AI</a></li>
+                        {% if user.is_authenticated %}
+                            <li class="nav-item"><a class="nav-link" href="{% url 'symbol_library' %}">Thư viện</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'blog_feed' %}">Cộng đồng</a></li>
+                            {% if user.is_staff or user.userprofile.is_manager %}
+                                <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                            {% else %}
+                                <li class="nav-item"><a class="nav-link" href="{% url 'progress' %}">Tiến trình</a></li>
+                            {% endif %}
+
+                            {% if user.is_staff or user.userprofile.is_manager %}
+                            <li class="nav-item me-2">
+                                <a class="nav-link position-relative" href="{% url 'inbox' %}" title="Hộp thư đến">
+                                    <i class="fas fa-envelope fs-5"></i>
+                                    <span id="unread-count-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="display: none;">
+                                        <span class="visually-hidden">tin nhắn chưa đọc</span>
+                                    </span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                                    <img src="{{ user.userprofile.avatar.url }}" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                                    <span>{{ user.username }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                    <li><a class="dropdown-item" href="{% url 'profile' %}">Tài khoản</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Đăng xuất</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item ms-lg-3"><a class="btn btn-outline-primary me-2" href="{% url 'login' %}">Đăng Nhập</a></li>
+                            <li class="nav-item"><a class="btn btn-primary" href="{% url 'register' %}">Đăng Ký</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content-wrapper">
+        <div class="container-custom">
+            {% if messages %}
+                <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+                {% for message in messages %}
+                    {% with tag=message.tags %}
+                        <div class="toast align-items-center text-white {% if tag == 'error' %}bg-danger{% elif tag == 'success' %}bg-success{% elif tag == 'warning' %}bg-warning{% else %}bg-info{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">{{ message }}</div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    {% endwith %}
+                {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container-custom"><p>© 2026 Ngôn Ngữ Ký Hiệu. All rights reserved.</p></div>
+    </footer>
+
+    {% if user.is_authenticated %}
+        {% include 'chat/chat_widget.html' %}
+        {% include 'chat/ai_chat_widget.html' %}
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, { delay: 5000 });
+        });
+        toastList.forEach(toast => toast.show());
+
+        const liveChatWidgetEl = document.getElementById('chat-widget');
+        const aiChatWidgetEl = document.getElementById('ai-chat-widget');
+
+        if(liveChatWidgetEl && aiChatWidgetEl) {
+            const liveChatCollapse = new bootstrap.Collapse(liveChatWidgetEl, { toggle: false });
+            const aiChatCollapse = new bootstrap.Collapse(aiChatWidgetEl, { toggle: false });
+
+            liveChatWidgetEl.addEventListener('show.bs.collapse', function () {
+                aiChatCollapse.hide();
+            });
+
+            aiChatWidgetEl.addEventListener('show.bs.collapse', function () {
+                liveChatCollapse.hide();
+            });
+        }
+    });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+    {% if user.is_staff or user.userprofile.is_manager %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const unreadBadge = document.getElementById('unread-count-badge');
+
+        function checkUnread() {
+            fetch('{% url "check_unread_api" %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.unread_count > 0) {
+                        unreadBadge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                        unreadBadge.style.display = 'block';
+                    } else {
+                        unreadBadge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error checking unread messages:', error));
+        }
+        setInterval(checkUnread, 30000); // Check every 30 seconds
+        checkUnread(); // Initial check
+    });
+    </script>
+    {% endif %}
+</body>
+</html>

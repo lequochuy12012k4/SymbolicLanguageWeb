@@ -1,0 +1,272 @@
+{% load static %}
+<style>
+    #chat-widget-toggle {
+        position: fixed;
+        bottom: 20px;
+        right: 90px; /* Positioned to the left of the AI chat button */
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        z-index: 1030;
+    }
+    #chat-widget-toggle:hover { background-color: #0056b3; }
+    
+    #chat-widget {
+        position: fixed;
+        bottom: 90px;
+        right: 90px;
+        width: 370px;
+        height: 500px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        display: flex;
+        flex-direction: column;
+        background-color: #f0f2f5; 
+        border: 1px solid var(--border-color);
+        z-index: 1029;
+    }
+
+    #chat-widget.collapse:not(.show) {
+        display: none;
+    }
+
+    .chat-header {
+        background-color: #0d6efd;
+        color: white;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+    }
+    .chat-body { flex-grow: 1; display: flex; flex-direction: column; }
+
+    #initial-start-form {
+        display: flex; 
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        text-align: center;
+        padding: 1rem;
+    }
+    #conversation-view { display: none; height: 100%; flex-direction: column; }
+    #messages-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .message-wrapper { display: flex; margin-bottom: 0.5rem; }
+    .message { max-width: 85%; padding: 0.6rem 0.9rem; border-radius: 1.2rem; word-wrap: break-word; }
+    .message-sent-wrapper { justify-content: flex-end; }
+    .message-received-wrapper { justify-content: flex-start; }
+    .message.message-sent { background-color: var(--primary-color); color: white; border-bottom-right-radius: 0.3rem; }
+    .message.message-received { background-color: #ffffff; border: 1px solid #e2e8f0; border-bottom-left-radius: 0.3rem; }
+    .timestamp { font-size: 0.7rem; color: #6c757d; margin-top: 0.3rem; text-align: right; }
+    .message-sent .timestamp { color: #e0e0e0; }
+    #reply-form { padding: 0.75rem; background-color: #fff; border-top: 1px solid #ddd; }
+</style>
+
+<!-- Chat Toggle Button -->
+<div id="chat-widget-toggle" data-bs-toggle="collapse" data-bs-target="#chat-widget" aria-expanded="false" aria-controls="chat-widget">
+    <i class="fas fa-comments"></i>
+</div>
+
+<!-- Chat Window -->
+<div class="collapse" id="chat-widget">
+    <div class="chat-header"><span>Hỗ trợ trực tuyến</span></div>
+    <div class="chat-body">
+        <div id="initial-start-form">
+            <p>Chào bạn! Bạn có câu hỏi hay cần giúp đỡ gì không?</p>
+            <form id="start-chat-form" style="width: 100%;">
+                <div class="form-group mb-2">
+                    <textarea id="chat-initial-message" class="form-control" rows="5" placeholder="Nhập tin nhắn của bạn ở đây..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Bắt đầu trò chuyện</button>
+            </form>
+        </div>
+        <div id="conversation-view">
+            <div id="messages-container"></div>
+            <form id="reply-form" autocomplete="off">
+                <div class="input-group">
+                    <input type="text" id="reply-content-live" class="form-control" placeholder="Nhập tin nhắn...">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatWidget = document.getElementById('chat-widget');
+    const toggleButton = document.getElementById('chat-widget-toggle');
+    
+    const initialStartForm = document.getElementById('initial-start-form');
+    const conversationView = document.getElementById('conversation-view');
+    const messagesContainer = document.getElementById('messages-container');
+    const startChatForm = document.getElementById('start-chat-form');
+    const replyForm = document.getElementById('reply-form');
+    const replyContentInput = document.getElementById('reply-content-live');
+
+    let conversationId = null;
+    let lastMessageId = 0;
+    let pollingInterval = null;
+    const currentUserId = "{{ request.user.id }}";
+
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function appendMessage(msg, container) {
+        const isSent = msg.sender.id == currentUserId;
+        const wrapperClass = isSent ? 'message-sent-wrapper' : 'message-received-wrapper';
+        const messageClass = isSent ? 'message-sent' : 'message-received';
+
+        const wrapperDiv = document.createElement('div');
+        wrapperDiv.className = `message-wrapper ${wrapperClass}`;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${messageClass}`;
+        messageDiv.dataset.messageId = msg.id;
+        messageDiv.innerHTML = `
+            <div>${msg.content.replace(/\n/g, '<br>')}</div>
+            <div class="timestamp">${msg.timestamp}</div>
+        `;
+        
+        wrapperDiv.appendChild(messageDiv);
+        container.appendChild(wrapperDiv);
+        lastMessageId = isNaN(msg.id) ? lastMessageId : Math.max(lastMessageId, msg.id);
+    }
+
+    async function fetchMessages(isInitial = false) {
+        if (!conversationId) return;
+        try {
+            const url = isInitial ? `/api/conversation/${conversationId}/messages/` : `/api/conversation/${conversationId}/messages/?last_message_id=${lastMessageId}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => appendMessage(msg, messagesContainer));
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy tin nhắn:', error);
+        }
+    }
+
+    async function loadConversation() {
+        try {
+            const response = await fetch(`{% url 'get_user_conversation_api' %}`);
+            const data = await response.json();
+            if (data.conversation_id) {
+                conversationId = data.conversation_id;
+                initialStartForm.style.display = 'none';
+                conversationView.style.display = 'flex';
+                messagesContainer.innerHTML = '';
+                lastMessageId = 0;
+                await fetchMessages(true); 
+                if (pollingInterval) clearInterval(pollingInterval);
+                pollingInterval = setInterval(() => fetchMessages(false), 3000);
+            } else {
+                initialStartForm.style.display = 'flex';
+                conversationView.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải cuộc trò chuyện:', error);
+            initialStartForm.style.display = 'flex';
+            conversationView.style.display = 'none';
+        }
+    }
+
+    async function handleStartChat(e) {
+        e.preventDefault();
+        const messageInput = document.getElementById('chat-initial-message');
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        try {
+            const response = await fetch(`{% url 'start_conversation_api' %}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `content=${encodeURIComponent(content)}`
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                await loadConversation();
+            } else {
+                alert("Lỗi: " + data.message);
+            }
+        } catch (error) {
+            console.error('Lỗi khi bắt đầu trò chuyện:', error);
+        }
+    }
+
+    async function handleReply(e) {
+        e.preventDefault();
+        const content = replyContentInput.value.trim();
+        if (!content || !conversationId) return;
+        
+        const tempId = `temp-${Date.now()}`;
+        const now = new Date();
+        const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        appendMessage({ id: tempId, sender: { id: currentUserId }, content: content, timestamp: timestamp }, messagesContainer);
+        scrollToBottom();
+        replyContentInput.value = '';
+
+        try {
+            const response = await fetch(`/api/send_reply/${conversationId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `content=${encodeURIComponent(content)}`
+            });
+            const data = await response.json();
+            const realMessageElem = document.querySelector(`[data-message-id="${tempId}"]`);
+            if (data.status === 'success') {
+                if(realMessageElem) realMessageElem.dataset.messageId = data.message.id;
+                lastMessageId = Math.max(lastMessageId, data.message.id);
+            } else {
+                if(realMessageElem) realMessageElem.style.border = '1px solid red';
+                replyContentInput.value = content;
+            }
+        } catch (error) {
+            if(document.querySelector(`[data-message-id="${tempId}"]`)) document.querySelector(`[data-message-id="${tempId}"]`).style.border = '1px solid red';
+            replyContentInput.value = content;
+        }
+    }
+
+    chatWidget.addEventListener('show.bs.collapse', function () {
+        if ("{{ request.user.is_authenticated }}" === "True") {
+            loadConversation();
+        } else {
+             initialStartForm.style.display = 'flex';
+             conversationView.style.display = 'none';
+             const formContent = initialStartForm.querySelector('#start-chat-form');
+             initialStartForm.querySelector('p').textContent = "Vui lòng đăng nhập để bắt đầu trò chuyện.";
+             if(formContent) formContent.style.display = 'none';
+        }
+    });
+
+    chatWidget.addEventListener('hide.bs.collapse', function () {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    });
+
+    startChatForm.addEventListener('submit', handleStartChat);
+    replyForm.addEventListener('submit', handleReply);
+});
+</script>

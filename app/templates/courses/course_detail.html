@@ -1,0 +1,177 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ course.title }} - Chi tiết Khoá Học{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4f46e5;
+        --secondary-color: #f8fafc;
+        --text-color: #0f172a;
+        --muted-text-color: #64748b;
+    }
+
+    body {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+    }
+
+    .course-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .course-meta-icons span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-right: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .main-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    }
+
+    .sidebar .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    }
+
+    .chapter-item {
+        padding: 1.25rem 1.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    .chapter-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        transform: translateY(-2px);
+    }
+
+    .review-card {
+        border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .progress {
+        height: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .progress-bar {
+        background-color: var(--primary-color);
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Course Header -->
+    <header class="course-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold">{{ course.title }}</h1>
+                <p class="lead my-3">{{ course.description }}</p>
+                <div class="d-flex flex-wrap course-meta-icons mt-4">
+                    <span><i class="fas fa-tag"></i> {{ course.get_category_display }}</span>
+                    <span><i class="fas fa-signal"></i> {{ course.get_difficulty_display }}</span>
+                    <span><i class="fas fa-clock"></i> {{ course.duration }} giờ</span>
+                    <span><i class="fas fa-star text-warning"></i> {{ course.average_rating|floatformat:1 }}/5.0</span>
+                    <span><i class="fas fa-users"></i> {{ course.student_count }} học viên</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="row">
+        <!-- Main Content Column -->
+        <div class="col-lg-8">
+            <div class="main-content">
+                <!-- Course Content -->
+                <section id="course-content">
+                    <h3 class="mb-4 fw-bold">Nội dung khoá học</h3>
+                    <div class="list-group">
+                        {% for chapter in chapters %}
+                        <a href="{% if is_enrolled %}{% url 'chapter_exercises' chapter.id %}{% else %}#enroll-prompt{% endif %}" 
+                           class="chapter-item list-group-item-action {% if not is_enrolled %}disabled{% endif %}">
+                            <div class="fw-bold"><i class="fas fa-book-open me-2"></i>Chương {{ chapter.order }}: {{ chapter.title }}</div>
+                            <span class="btn btn-sm btn-outline-primary">Xem chương</span>
+                        </a>
+                        {% empty %}
+                        <p>Nội dung khóa học đang được cập nhật.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <hr class="my-5">
+
+                <!-- Reviews Section -->
+                <section id="reviews">
+                    <h3 class="mb-4 fw-bold">Đánh giá từ học viên ({{ course.review_count }})</h3>
+                    {% for review in reviews %}
+                        <div class="review-card mb-4">
+                            <div class="d-flex align-items-start">
+                                <img src="{{ review.enrollment.user_profile.avatar.url }}" alt="avatar" class="rounded-circle me-3" width="50" height="50">
+                                <div>
+                                    <h5 class="fw-bold mb-1">{{ review.enrollment.user_profile.user.username }}</h5>
+                                    <div class="mb-2">
+                                        {% for i in "12345" %}
+                                            <i class="fas fa-star {% if forloop.counter <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <p class="mb-0">{{ review.comment }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p>Chưa có đánh giá nào cho khoá học này.</p>
+                    {% endfor %}
+                </section>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="col-lg-4">
+            <aside class="sidebar">
+                <div class="card" id="enroll-prompt">
+                    <img src="/media/Course_thumbnail.png" class="card-img-top" alt="Course thumbnail">
+                    <div class="card-body text-center">
+                        {% if is_enrolled %}
+                            <h5 class="card-title fw-bold">Tiến trình của bạn</h5>
+                            <p class="text-muted">{{ enrollment.progress_percentage|floatformat:0 }}% Hoàn thành</p>
+                            <div class="progress mb-3">
+                                <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress_percentage }}%;" 
+                                     aria-valuenow="{{ enrollment.progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <a href="{% if chapters.first %}{% url 'chapter_exercises' chapters.first.id %}{% endif %}" class="btn btn-primary w-100 fw-bold">Tiếp tục học</a>
+                        {% else %}
+                            <h5 class="card-title fw-bold">Tham gia khoá học</h5>
+                            <p class="card-text">Bắt đầu hành trình học tập của bạn ngay hôm nay.</p>
+                            <form method="post" action="{% url 'enroll_course' course.id %}">
+                                {% csrf_token %}
+                                <button type-="submit" class="btn btn-success w-100 fw-bold">Đăng ký ngay</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+{% endblock %}

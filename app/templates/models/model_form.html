@@ -1,0 +1,218 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) { .sidebar-modern { display: flex; } }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover { background-color: #f1f5f9; color: var(--primary); }
+    .nav-link-custom.active { background-color: #eef2ff; color: var(--primary); }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .content-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    .main-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+        margin-bottom: 24px;
+    }
+    
+    .card-body-custom {
+        padding: 2.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .form-control, .form-check-input {
+        border-color: var(--border);
+    }
+    .form-control:focus, .form-check-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 .25rem rgba(79, 70, 229, .25)
+    }
+    .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    .form-text {
+        font-size: 0.875em;
+    }
+    code {
+        color: var(--primary);
+        background-color: #eef2ff;
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link-custom"><i class="fas fa-home-alt"></i> Dashboard</a></li>
+            <li class="nav-item"><a href="{% url 'course_list' %}" class="nav-link-custom"><i class="fas fa-book-open"></i> Khoá học</a></li>
+        </ul>
+
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item"><a href="{% url 'user_list' %}" class="nav-link-custom"><i class="fas fa-users-cog"></i> Quản lý Người dùng</a></li>
+            <li class="nav-item"><a href="{% url 'course_management' %}" class="nav-link-custom"><i class="fas fa-book"></i> Quản lý Khoá học</a></li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item"><a href="{% url 'model_management' %}" class="nav-link-custom active"><i class="fas fa-robot"></i> Quản lý Model AI</a></li>
+            <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item"><a href="/admin/" class="nav-link-custom"><i class="fas fa-user-shield"></i> Hệ thống Admin</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="content-header">
+            <div class="page-heading">
+                <h2>{{ page_title }}</h2>
+                <p>Cung cấp thông tin chi tiết và tải lên tệp cho model AI.</p>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="main-card">
+            <div class="card-body-custom">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="name" class="form-label">Tên Model</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ model.name|default:'' }}" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="model_file" class="form-label">Tệp Model</label>
+                        {% if model.file_path %}
+                            <div class="form-text mb-2">
+                                Tệp hiện tại: <code>{{ model.file_path|cut:"Models/" }}</code>
+                            </div>
+                            <div class="form-text text-muted mb-2">
+                                Tải lên tệp mới sẽ ghi đè lên tệp cũ. Để trống nếu bạn không muốn thay đổi.
+                            </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="model_file" name="model_file" {% if not model %}required{% endif %}>
+                        <div class="form-text mt-1">Chỉ chấp nhận tệp <code>.h5</code> hoặc <code>.keras</code>.</div>
+                    </div>
+
+                    <div class="form-check form-switch mb-4 pb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" {% if model.is_active %}checked{% endif %}>
+                        <label class="form-check-label ms-2" for="is_active">
+                            Kích hoạt model này?
+                        </label>
+                        <div class="form-text mt-2">Lưu ý: Kích hoạt model này sẽ tự động vô hiệu hóa bất kỳ model nào khác đang hoạt động.</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 pt-3 border-top mt-4">
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                        <a href="{% url 'model_management' %}" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

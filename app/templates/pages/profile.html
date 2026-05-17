@@ -1,0 +1,226 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}Hồ Sơ Của {{ user.username }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body {
+        background-color: #f4f7f6;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        border-radius: 0 0 30px 30px;
+        margin-bottom: -50px; /* Pull the content up */
+        position: relative;
+    }
+
+    .profile-avatar-wrapper {
+        position: relative;
+        width: 130px;
+        height: 130px;
+        margin: auto;
+        border: 5px solid white;
+        border-radius: 50%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        background-color: white;
+    }
+
+    .profile-avatar {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .profile-header h2 {
+        margin-top: 1rem;
+        font-weight: 700;
+    }
+
+    .profile-container {
+        margin-top: 2rem;
+        position: relative; /* For stacking context */
+        z-index: 1;
+    }
+
+    .profile-content-wrapper {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+    }
+
+    .nav-pills .nav-link {
+        color: #555;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        transition: all 0.3s ease;
+        text-align: left;
+    }
+
+    .nav-pills .nav-link.active, .nav-pills .show>.nav-link {
+        color: #fff;
+        background-color: #764ba2;
+        box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+    }
+    
+    .tab-content {
+        padding-left: 1rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-control,
+    .form-control-file {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 0.75rem 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #764ba2;
+        box-shadow: 0 0 0 0.2rem rgba(118, 75, 162, 0.25);
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .course-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .course-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .course-item:last-child {
+        border-bottom: none;
+    }
+
+    .course-item h5 a {
+        font-weight: 600;
+        text-decoration: none;
+        color: #34495e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="profile-avatar-wrapper">
+        <img src="{% if user.userprofile.avatar %}{{ user.userprofile.avatar.url }}{% else %}{% static 'images/default_avatar.png' %}{% endif %}" alt="Avatar" class="profile-avatar">
+    </div>
+    <h2>{{ user.get_full_name|default:user.username }}</h2>
+    <p class="mb-0"><i class="fas fa-envelope fa-fw"></i> {{ user.email }}</p>
+    <p><i class="fas fa-calendar-alt fa-fw"></i> Tham gia từ {{ user.date_joined|date:"d/m/Y" }}</p>
+</div>
+
+<div class="container profile-container">
+    <div class="profile-content-wrapper">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                    <a class="nav-link active" id="v-pills-courses-tab" data-bs-toggle="pill" href="#v-pills-courses" role="tab" aria-controls="v-pills-courses" aria-selected="true"><i class="fas fa-book fa-fw me-2"></i>Khóa học của tôi</a>
+                    <a class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" href="#v-pills-profile" role="tab" aria-controls="v-pills-profile" aria-selected="false"><i class="fas fa-user-edit fa-fw me-2"></i>Cập nhật hồ sơ</a>
+                    <a class="nav-link" id="v-pills-password-tab" data-bs-toggle="pill" href="#v-pills-password" role="tab" aria-controls="v-pills-password" aria-selected="false"><i class="fas fa-key fa-fw me-2"></i>Đổi mật khẩu</a>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="tab-content" id="v-pills-tabContent">
+                    <!-- My Courses Tab -->
+                    <div class="tab-pane fade show active" id="v-pills-courses" role="tabpanel" aria-labelledby="v-pills-courses-tab">
+                        <h4>Các khóa học đã đăng ký</h4>
+                        <hr>
+                        {% if enrolled_courses %}
+                            <ul class="course-list">
+                                {% for enrollment in enrolled_courses %}
+                                    <li class="course-item">
+                                        <div class="flex-grow-1">
+                                            <h5><a href="{% url 'course_detail' enrollment.course.id %}">{{ enrollment.course.title }}</a></h5>
+                                            <div class="progress" style="height: 10px;">
+                                                <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress }}%; background-color: #764ba2;" aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <small class="text-muted">Hoàn thành: {{ enrollment.progress }}%</small>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="text-center p-4">
+                                <p>Bạn chưa tham gia khóa học nào.</p>
+                                <a href="{% url 'course_list' %}" class="btn btn-primary-custom"><i class="fas fa-search"></i> Khám phá ngay</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Profile Update Tab -->
+                    <div class="tab-pane fade" id="v-pills-profile" role="tabpanel" aria-labelledby="v-pills-profile-tab">
+                        <h4>Cập nhật thông tin cá nhân</h4>
+                        <hr>
+                        <form method="POST" enctype="multipart/form-data" action="{% url 'profile' %}">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                                <label for="id_avatar">Ảnh đại diện</label>
+                                {{ profile_form.avatar }}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 form-group mb-3">
+                                    <label for="id_first_name">Họ</label>
+                                    {{ user_form.first_name }}
+                                </div>
+                                <div class="col-md-6 form-group mb-3">
+                                    <label for="id_last_name">Tên</label>
+                                    {{ user_form.last_name }}
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="id_email">Email</label>
+                                {{ user_form.email }}
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="id_bio">Tiểu sử</label>
+                                {{ profile_form.bio }}
+                            </div>
+                            <button type="submit" name="update_profile" class="btn btn-primary-custom">Lưu thay đổi</button>
+                        </form>
+                    </div>
+
+                    <!-- Change Password Tab -->
+                    <div class="tab-pane fade" id="v-pills-password" role="tabpanel" aria-labelledby="v-pills-password-tab">
+                        <h4>Đổi mật khẩu</h4>
+                        <hr>
+                        <form method="POST" action="{% url 'profile' %}">
+                            {% csrf_token %}
+                            {{ password_form.as_p }}
+                            <button type="submit" name="change_password" class="btn btn-primary-custom mt-2">Xác nhận đổi mật khẩu</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

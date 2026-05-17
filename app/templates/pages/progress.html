@@ -1,0 +1,289 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Tiến trình{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) {
+        .sidebar-modern { display: flex; }
+    }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover {
+        background-color: #f1f5f9;
+        color: var(--primary);
+    }
+    .nav-link-custom.active {
+        background-color: #eef2ff;
+        color: var(--primary);
+    }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .card-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .card-head h3 { font-size: 16px; font-weight: 600; margin: 0; color: #334155; }
+
+    .card-body-custom { padding: 24px; }
+    
+    .table-pro { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .table-pro th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        padding: 12px 24px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    .table-pro td {
+        padding: 16px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14px;
+        color: #334155;
+    }
+    .table-pro tr:last-child td { border-bottom: none; }
+    
+    .progress-minimal {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+        width: 100px;
+    }
+    .progress-minimal-bar {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 10px;
+    }
+    
+    .badge-status {
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        background: #d1fae5;
+        color: #065f46;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'progress' %}" class="nav-link-custom active">
+                    <i class="fas fa-tasks"></i> Tiến trình
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_list' %}" class="nav-link-custom">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto p-3">
+            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border-radius: 50%;">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-truncate" style="font-size: 14px;">{{ user.username }}</div>
+                    <div class="text-muted text-truncate" style="font-size: 12px;">Học viên</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="page-heading mb-4">
+            <h2>Xin chào, {{ user.username }}!</h2>
+            <p>Theo dõi tiến độ học tập và các khoá học của bạn tại đây.</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- My Courses Table -->
+                <div class="glass-card">
+                    <div class="card-head">
+                        <h3>Khoá học của tôi</h3>
+                        <a href="{% url 'course_list' %}" class="btn btn-sm text-primary p-0 fw-bold">Xem tất cả</a>
+                    </div>
+                    <div class="card-body-custom p-0">
+                        <div class="table-responsive">
+                            <table class="table-pro">
+                                <thead>
+                                    <tr>
+                                        <th>Tên khoá học</th>
+                                        <th>Tiến độ</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if enrolled_courses %}
+                                        {% for enrollment in enrolled_courses %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold">{{ enrollment.course.title }}</div>
+                                                <div class="text-muted" style="font-size: 12px;">{{ enrollment.course.category }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="progress-minimal">
+                                                        <div class="progress-minimal-bar" style="width: {{ enrollment.progress }}%;"></div>
+                                                    </div>
+                                                    <span class="fw-bold" style="font-size: 13px;">{{ enrollment.progress }}%</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'course_detail' enrollment.course.id %}" class="btn btn-sm btn-outline-primary px-3 fw-bold">Học ngay</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center py-5">
+                                                <p class="text-muted">Bạn chưa tham gia khoá học nào.</p>
+                                                <a href="{% url 'course_list' %}" class="btn btn-primary btn-sm">Khám phá ngay</a>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Profile Summary -->
+                <div class="glass-card">
+                    <div class="card-head"><h3>Tài khoản</h3></div>
+                    <div class="card-body-custom">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">Email</span>
+                                <span class="fw-bold small">{{ user.email }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">Tham gia</span>
+                                <span class="fw-bold small">{{ user.date_joined|date:"d M, Y" }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">Trạng thái</span>
+                                <span class="badge-status">Đang hoạt động</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggestions -->
+                <div class="glass-card">
+                    <div class="card-head"><h3>Gợi ý khoá học</h3></div>
+                    <div class="card-body-custom">
+                        {% if available_courses %}
+                            {% for course in available_courses|slice:":3" %}
+                            <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded border border-light">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-star" style="font-size: 12px;"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold text-truncate" style="font-size: 13px;">{{ course.title }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ course.category }}</div>
+                                </div>
+                                <a href="{% url 'course_detail' course.id %}" class="ms-auto text-muted"><i class="fas fa-chevron-right"></i></a>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small text-center">Bạn đã tham gia tất cả các khoá học!</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

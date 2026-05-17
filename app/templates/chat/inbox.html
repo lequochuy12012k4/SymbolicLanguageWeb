@@ -1,0 +1,110 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}Hộp thư đến{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Hộp thư đến</h1>
+
+    {% if conversations %}
+        <div class="list-group" id="conversation-list">
+            {% for conversation in conversations %}
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" id="conv-{{ conversation.id }}">
+                    <a href="{% url 'conversation_detail' conversation.id %}" class="text-decoration-none text-dark flex-grow-1">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ conversation.user.username }}</h5>
+                            <small>{{ conversation.latest_message_time|timesince }} trước</small>
+                        </div>
+                        <p class="mb-1 text-muted">{{ conversation.latest_message_content|truncatechars:80 }}</p>
+                        <small>
+                            {% if conversation.assignee %}
+                                Phụ trách: <strong>{{ conversation.assignee.username }}</strong>
+                            {% else %}
+                                <strong class="text-danger">Chưa có người phụ trách</strong>
+                            {% endif %}
+                        </small>
+                    </a>
+                    <div class="ms-3 d-flex flex-column align-items-end">
+                        {% if conversation.unread_count > 0 %}
+                            <span class="badge bg-danger rounded-pill mb-2">{{ conversation.unread_count }}</span>
+                        {% endif %}
+                        <div class="btn-group mt-2">
+                            {% if not conversation.assignee %}
+                                <button class="btn btn-sm btn-success assign-btn" data-id="{{ conversation.id }}">Nhận</button>
+                            {% endif %}
+                            {% if conversation.assignee == request.user %}
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ conversation.id }}">Xóa</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Chưa có cuộc trò chuyện nào.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = '{{ csrf_token }}';
+
+    document.querySelectorAll('.assign-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const conversationId = e.target.dataset.id;
+            try {
+                const response = await fetch(`/api/conversation/${conversationId}/assign/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (error) {
+                console.error("Lỗi khi gán cuộc trò chuyện:", error);
+                alert('Đã xảy ra lỗi. Vui lòng thử lại.');
+            }
+        });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const conversationId = e.target.dataset.id;
+            if (!confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này không?')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/conversation/${conversationId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    document.getElementById(`conv-${conversationId}`).remove();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch (error) {
+                console.error("Lỗi khi xóa cuộc trò chuyện:", error);
+                alert('Đã xảy ra lỗi. Vui lòng thử lại.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

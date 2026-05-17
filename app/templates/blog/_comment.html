@@ -1,0 +1,38 @@
+<style>
+.comment-wrapper .dropdown {
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.comment-wrapper .comment-bubble:hover + .dropdown,
+.comment-wrapper .dropdown:hover {
+    opacity: 1;
+}
+
+.comment-bubble p {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+}
+</style>
+<div class="d-flex align-items-start gap-2 mb-2 comment-container">
+    <img src="{{ comment.author.userprofile.avatar.url|default:'https://res.cloudinary.com/djp6ttrb7/image/upload/v1715533353/user-default_k3v1v8.png' }}" alt="" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+    <div class="d-flex align-items-center gap-1 comment-wrapper">
+        <div class="px-3 py-2 comment-bubble" style="background-color: #f0f2f5; border-radius: 18px;">
+            <div>
+                <a href="#" class="fw-bold text-decoration-none text-dark small">{{ comment.author.username }}</a>
+            </div>
+            <p class="mb-0 small">{{ comment.content }}</p>
+        </div>
+        {% if comment.author == user or user.is_staff %}
+        <div class="dropdown">
+            <button class="btn btn-sm btn-light py-0 px-1 rounded-circle" type="button" data-bs-toggle="dropdown" style="width: 24px; height: 24px;"><i class="fas fa-ellipsis-h fa-xs"></i></button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a href="#" class="dropdown-item text-danger small delete-comment-btn" data-comment-id="{{ comment.id }}">Xoá</a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>

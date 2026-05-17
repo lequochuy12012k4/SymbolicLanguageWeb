@@ -1,0 +1,258 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    /* Sidebar */
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) {
+        .sidebar-modern { display: flex; }
+    }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover {
+        background-color: #f1f5f9;
+        color: var(--primary);
+    }
+    .nav-link-custom.active {
+        background-color: #eef2ff;
+        color: var(--primary);
+    }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    /* Main Content */
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .content-header {
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        margin-bottom: 24px;
+    }
+    
+    .card-body-custom { padding: 32px; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link-custom">
+                    <i class="fas fa-home-alt"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_list' %}" class="nav-link-custom">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            </li>
+        </ul>
+
+        {% if user.is_staff %}
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'user_list' %}" class="nav-link-custom">
+                    <i class="fas fa-users-cog"></i> Quản lý Người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_management' %}" class="nav-link-custom">
+                    <i class="fas fa-book"></i> Quản lý Khoá học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom active">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'model_management' %}" class="nav-link-custom">
+                    <i class="fas fa-robot"></i> Quản lý Model AI
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/" class="nav-link-custom">
+                    <i class="fas fa-user-shield"></i> Hệ thống Admin
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+
+        <div class="mt-auto p-3">
+             <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px; border-radius: 50%;">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-truncate" style="font-size: 14px;">{{ user.username }}</div>
+                    <div class="text-muted text-truncate" style="font-size: 12px;">{{ user.is_staff|yesno:"Administrator,Học viên" }}</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="content-header">
+            <div class="page-heading">
+                <h2>{{ page_title }}</h2>
+                {% if symbol %}
+                    <p>Cập nhật thông tin cho ký hiệu '{{ symbol.name }}'.</p>
+                {% else %}
+                    <p>Thêm một ký hiệu mới vào một danh mục.</p>
+                {% endif %}
+            </div>
+            <a href="{% url 'symbol_library_management' %}" class="btn btn-outline-secondary" style="border-radius: 8px;">
+                <i class="fas fa-arrow-left me-2"></i> Quay lại
+            </a>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-body-custom">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.category.label_tag }}</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}<div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.name.label_tag }}</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">{{ form.description.label_tag }}</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                             <label class="form-label">{{ form.image.label_tag }}</label>
+                            {% if symbol.image %}
+                                <p class="mt-1 mb-2 text-muted small">Ảnh hiện tại: <a href="{{ symbol.image.url }}" target="_blank">{{ symbol.image.name|truncatechars:30 }}</a></p>
+                            {% endif %}
+                            {{ form.image }}
+                            {% if form.image.errors %}<div class="invalid-feedback d-block">{{ form.image.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ form.video.label_tag }}</label>
+                             {% if symbol.video %}
+                                <p class="mt-1 mb-2 text-muted small">Video hiện tại: <a href="{{ symbol.video.url }}" target="_blank">{{ symbol.video.name|truncatechars:30 }}</a></p>
+                            {% endif %}
+                            {{ form.video }}
+                             {% if form.video.errors %}<div class="invalid-feedback d-block">{{ form.video.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                        <a href="{% url 'symbol_library_management' %}" class="btn btn-secondary me-2">Hủy</a>
+                        <button type="submit" class="btn btn-primary">{{ action }} Ký hiệu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
