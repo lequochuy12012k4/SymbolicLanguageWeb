@@ -10,7 +10,7 @@ __pycache__/
 # Django
 *.log
 db.sqlite3
-
+/data/
 # Static files
 /static/
 
