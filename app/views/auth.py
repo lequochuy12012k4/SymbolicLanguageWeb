@@ -41,11 +41,10 @@ def register(request):
 
         user = User.objects.create_user(username=username, email=email, password=password)
         user.is_active = False
-        # user.save() is not needed here because create_user already saves.
 
         # Send activation email
         mail_subject = 'Kích hoạt tài khoản Ngôn Ngữ Ký Hiệu của bạn.'
-        message = render_to_string('auth/account_activation_email.html', {
+        html_message = render_to_string('auth/account_activation_email.html', {
             'user': user,
             'domain': request.get_host(),
             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
@@ -53,7 +52,14 @@ def register(request):
             'protocol': 'https' if request.is_secure() else 'http',
         })
         to_email = email
-        send_mail(mail_subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
+        
+        send_mail(
+            mail_subject, 
+            'Vui lòng kích hoạt tài khoản của bạn.', 
+            settings.DEFAULT_FROM_EMAIL, 
+            [to_email], 
+            html_message=html_message
+        )
 
         messages.success(request, 'Đăng ký thành công! Vui lòng kiểm tra email của bạn để kích hoạt tài khoản.')
         return redirect('login')
@@ -71,7 +77,6 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.save()
         
-        # Automatically enroll the user in the latest course
         try:
             latest_course = Course.objects.latest('created_at')
             user_profile = UserProfile.objects.get(user=user)
@@ -82,7 +87,6 @@ def activate(request, uidb64, token):
         except UserProfile.DoesNotExist:
             messages.warning(request, 'Tài khoản của bạn đã được kích hoạt, nhưng đã có lỗi xảy ra khi tự động ghi danh vào khóa học.')
 
-        # Log the user in properly
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, user)
         return redirect('progress')
@@ -90,7 +94,6 @@ def activate(request, uidb64, token):
         return render(request, 'auth/activation_invalid.html')
 
 def login_view(request):
-    """User login view"""
     if request.user.is_authenticated:
         if request.user.is_staff:
             return redirect('dashboard')
@@ -138,14 +141,15 @@ def password_reset_request(request):
                         'token': default_token_generator.make_token(user),
                         'protocol': 'https' if request.is_secure() else 'http',
                     }
-                    email_content = render_to_string(email_template_name, context)
+                    html_content = render_to_string(email_template_name, context)
                     try:
                         send_mail(
                             subject,
-                            email_content,
+                            'Vui lòng làm theo hướng dẫn để đặt lại mật khẩu của bạn.',
                             settings.DEFAULT_FROM_EMAIL,
                             [user.email],
                             fail_silently=False,
+                            html_message=html_content
                         )
                     except Exception as e:
                         return HttpResponse(f'Lỗi khi gửi email: {e}')
@@ -162,7 +166,6 @@ def password_reset_request(request):
 
 @login_required(login_url='login')
 def logout_view(request):
-    """User logout view"""
     history_key = f'gemini_chat_history_user_{request.user.id}'
     cache.delete(history_key)
     logout(request)
@@ -191,7 +194,6 @@ def profile(request):
                 messages.success(request, 'Mật khẩu của bạn đã được thay đổi thành công.')
                 return redirect('profile')
             else:
-                # This is so the other forms still have their data
                 user_form = UserUpdateForm(instance=request.user)
                 profile_form = ProfileUpdateForm(instance=user_profile)
 

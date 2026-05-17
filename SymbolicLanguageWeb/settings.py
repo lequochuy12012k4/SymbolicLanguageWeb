@@ -78,7 +78,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'quochuy120124@gmail.com'
-EMAIL_HOST_PASSWORD = 'hhoo etsh cqvl qlgz'
+EMAIL_HOST_PASSWORD = 'qywi wyzv pfwl cswg'
 DEFAULT_FROM_EMAIL = 'symboliclanguage@gmail.com'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

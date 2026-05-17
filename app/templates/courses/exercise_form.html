@@ -9,42 +9,235 @@
     {% endif %}
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #4f46e5;
+        --sidebar-bg: #ffffff;
+        --content-bg: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --card-bg: #ffffff;
+        --border: #e2e8f0;
+        --radius: 12px;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: var(--content-bg) !important;
+        color: var(--text-main);
+    }
+
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 72px);
+        margin-top: -32px; 
+        margin-left: -24px;
+        margin-right: -24px;
+    }
+
+    /* Sidebar */
+    .sidebar-modern {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border);
+        display: none;
+        flex-direction: column;
+        padding: 24px 16px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+    }
+
+    @media (min-width: 992px) {
+        .sidebar-modern { display: flex; }
+    }
+
+    .nav-list { list-style: none; padding: 0; margin: 0; }
+    .nav-item { margin-bottom: 4px; }
+    .nav-link-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .nav-link-custom:hover {
+        background-color: #f1f5f9;
+        color: var(--primary);
+    }
+    .nav-link-custom.active {
+        background-color: #eef2ff;
+        color: var(--primary);
+    }
+    .nav-link-custom i { font-size: 18px; width: 20px; text-align: center; }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 24px 16px 8px;
+    }
+
+    /* Main Content */
+    .dashboard-content {
+        flex: 1;
+        padding: 32px;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .content-header {
+        margin-bottom: 32px;
+    }
+
+    .page-heading h2 { font-weight: 700; font-size: 24px; margin: 0; color: #1e293b; }
+    .page-heading p { color: var(--text-muted); margin: 4px 0 0; font-size: 14px; }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .card-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+    }
+    .card-head h3 { font-size: 16px; font-weight: 600; margin: 0; color: #334155; }
+
+    .card-body-custom { padding: 32px; }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #334155;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 1px solid #cbd5e1;
+    }
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px #e0e7ff;
+    }
+
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>
-        {{ action }} Exercise for "
-        {% if chapter %}
-            {{ chapter.title }}
-        {% else %}
-            {{ exercise.chapter.title }}
-        {% endif %}"
-    </h2>
-    <form method="POST">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="question" class="form-label">Question</label>
-            <textarea class="form-control" id="question" name="question" rows="3" required>{{ exercise.question|default:'' }}</textarea>
-        </div>
-        <div class="mb-3">
-            <label for="order" class="form-label">Order</label>
-            <input type="number" class="form-control" id="order" name="order" value="{% if exercise %}{{ exercise.order }}{% endif %}" required>
-        </div>
-        <div class="mb-3">
-            <label for="correct_answer" class="form-label">Correct Answer</label>
-            <input type="text" class="form-control" id="correct_answer" name="correct_answer" value="{% if exercise %}{{ exercise.answer.correct_answer }}{% endif %}" required>
-        </div>
-        <button type="submit" class="btn btn-primary">{{ action }} Exercise</button>
-        
-        {% comment %}
-        This logic correctly generates the cancel URL for both "Add" and "Edit" actions.
-        - When adding, `chapter` is in the context.
-        - When editing, `exercise` is in the context.
-        {% endcomment %}
-        {% if chapter %}
-            <a href="{% url 'edit_course' chapter.course.id %}" class="btn btn-secondary">Cancel</a>
-        {% else %}
-            <a href="{% url 'edit_course' exercise.chapter.course.id %}" class="btn btn-secondary">Cancel</a>
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar-modern">
+        <div class="nav-section-title">Tổng quan</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link-custom">
+                    <i class="fas fa-home-alt"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_list' %}" class="nav-link-custom">
+                    <i class="fas fa-book-open"></i> Khoá học
+                </a>
+            </li>
+        </ul>
+
+        {% if user.is_staff %}
+        <div class="nav-section-title">Quản trị</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{% url 'user_list' %}" class="nav-link-custom">
+                    <i class="fas fa-users-cog"></i> Quản lý Người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'course_management' %}" class="nav-link-custom active">
+                    <i class="fas fa-book"></i> Quản lý Khoá học
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'symbol_library_management' %}" class="nav-link-custom">
+                    <i class="fas fa-sign-language"></i> Quản lý Thư viện
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'model_management' %}" class="nav-link-custom">
+                    <i class="fas fa-robot"></i> Quản lý Model AI
+                </a>
+            </li>
+             <li class="nav-item">
+                <a href="{% url 'chatbot_api_management' %}" class="nav-link-custom">
+                    <i class="fas fa-key"></i> Quản lý API Chatbot
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/" class="nav-link-custom">
+                    <i class="fas fa-user-shield"></i> Hệ thống Admin
+                </a>
+            </li>
+        </ul>
         {% endif %}
-    </form>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+        <div class="content-header">
+            <div class="page-heading">
+                <h2>{{ action }} Exercise for "{% if chapter %}{{ chapter.title }}{% else %}{{ exercise.chapter.title }}{% endif %}"</h2>
+                <p>Điền thông tin chi tiết của bài tập bên dưới.</p>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="card-head">
+                <h3>Thông tin Bài tập</h3>
+            </div>
+            <div class="card-body-custom">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="question" class="form-label">Câu hỏi</label>
+                        <textarea class="form-control" id="question" name="question" rows="3" required placeholder="e.g., What is the sign for 'Hello'?">{{ exercise.question|default:'' }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="order" class="form-label">Thứ tự</label>
+                            <input type="number" class="form-control" id="order" name="order" value="{% if exercise %}{{ exercise.order }}{% endif %}" required placeholder="e.g., 1">
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label for="correct_answer" class="form-label">Đáp án đúng</label>
+                            <input type="text" class="form-control" id="correct_answer" name="correct_answer" value="{% if exercise %}{{ exercise.answer.correct_answer }}{% endif %}" required placeholder="e.g., Hello">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 pt-4 border-top mt-4">
+                         {% if chapter %}
+                            <a href="{% url 'edit_course' chapter.course.id %}" class="btn btn-outline-secondary px-4 py-2" style="font-weight: 600; border-radius: 8px;">Huỷ</a>
+                        {% else %}
+                            <a href="{% url 'edit_course' exercise.chapter.course.id %}" class="btn btn-outline-secondary px-4 py-2" style="font-weight: 600; border-radius: 8px;">Huỷ</a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary px-4 py-2" style="font-weight: 600; border-radius: 8px;">
+                            {{ action }} Exercise
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
 </div>
 {% endblock %}
